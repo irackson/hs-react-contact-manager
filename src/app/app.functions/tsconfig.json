@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"display": "Serverless Functions Config",
+	"compilerOptions": {
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"types": [
+			"node"
+		],
+		"strict": true,
+		"noEmit": true,
+		"resolveJsonModule": true
+	},
+	"include": [
+		"./**/*.ts",
+		"./**/*.mts",
+	],
+	"exclude": [
+		"node_modules"
+	]
+}
