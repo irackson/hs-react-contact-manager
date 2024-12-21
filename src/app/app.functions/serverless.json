@@ -1,7 +1,7 @@
 {
   "appFunctions": {
     "myFunc": {
-      "file": "example-function.mts",
+      "file": "example-function.ts",
       "secrets": []
     }
   }
