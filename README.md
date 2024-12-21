@@ -1,17 +1,43 @@
-# HubSpot Getting Started Project Template
+# Ian Rackson's Contact Manager HubSpot UI Extension
 
-This is the Getting Started project for HubSpot developer projects. It contains a private app, a CRM card written in React, and a serverless function that the CRM card is able to interact with. This code is intended to help developers get up and running with developer projects quickly and easily.
+## Relevant Docs
 
-## Requirements
+- [UI Customization SDK](https://developers.hubspot.com/docs/guides/crm/ui-extensions/sdk)
+- [HubSpot CLI Commands](https://developers.hubspot.com/docs/guides/cms/tools/local-development-cli)
+- [GitHub Examples](https://github.com/HubSpot/ui-extensions-examples)
+- [GitHub Tailwind Example](https://github.com/HubSpot/cms-react/blob/main/examples/styling/styling-project/styling-app/postcss.config.mjs)
+- [GitHub CMS-React Docs](https://github.hubspot.com/cms-react/#what-are-the-new-things)
+- [Card Location Options](https://knowledge.hubspot.com/object-settings/customize-records)
+- [Figma Design Kit](https://developers.hubspot.com/docs/reference/ui-components/figma-design-kit)
+- [GraphiQL Playground in Portal](https://app.hubspot.com/graphiql/48631558)
+- [Project in Portal](https://app.hubspot.com/developer-projects/48631558/project/hs-react-contact-manager)
+- [Test Contact](https://app.hubspot.com/contacts/48631558/record/0-1/86494764070)
 
-There are a few things that must be set up before you can make use of this getting started project.
+## Serverless Functions
 
-- You must have an active HubSpot account.
-- You must have the [HubSpot CLI](https://www.npmjs.com/package/@hubspot/cli) installed and set up.
-- You must have access to developer projects (developer projects are currently [in public beta under "CRM Development Tools"](https://app.hubspot.com/l/whats-new/betas)).
+- [HubSpot Serverless FunctionURL](https://app.hubspot.com/api/crm-extensibility/execution/internal/v3/action/function/5883972?portalId=48631558&clienttimeout=30000&hs_static_app=crm-records-ui&hs_static_app_version=1.69200)
+- [Local Development Serverless Function URL](http://localhost:5173/api/crm-extensibility/execution/internal/v3/action/function/5883972)
+  > Example POST request Body:
 
-## Usage
+```json
+{
+  "appId": 5883972,
+  "extensibleCardId": 100842670,
+  "serverlessFunction": "myFunc",
+  "location": "crm.record.tab",
+  "parameters": {
+    "text": "hello world"
+  },
+  "objectId": 86494764070,
+  "objectTypeId": "0-1"
+}
+```
 
-The HubSpot CLI enables you to run this project locally so that you may test and iterate quickly. Getting started is simple, just run this HubSpot CLI command in your project directory and follow the prompts:
+> Example Response
 
-`hs project dev`
+```json
+{
+  "logId": "n/a",
+  "response": "This is coming from a serverless function! You entered: sup"
+}
+```
