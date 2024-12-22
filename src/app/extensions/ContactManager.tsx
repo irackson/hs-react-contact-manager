@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button, Flex, Text } from '@hubspot/ui-extensions';
 import ContactFilter from './Components/ContactFilter';
 import ContactForm from './Components/ContactForm';
-import ContactList, { Contact } from './Components/ContactList';
+import ContactList, { type Contact } from './Components/ContactList';
 
 // Define the extension to be run within the Hubspot CRM
 hubspot.extend(({ context, runServerlessFunction, actions }) => (
