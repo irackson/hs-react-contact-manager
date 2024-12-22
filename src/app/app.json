@@ -9,13 +9,13 @@
       ]
     }
   },
-  "name": "Get started App",
+  "name": "Contact Manager App",
   "public": false,
   "scopes": [
     "crm.objects.contacts.read",
     "crm.objects.contacts.write"
   ],
-  "uid": "get_started_app",
+  "uid": "contact_manager_app",
   "webhooks": {
     "file": "./webhooks/webhooks.json"
   }
