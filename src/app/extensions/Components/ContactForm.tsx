@@ -1,4 +1,4 @@
-import { useState, type FC, type FormEvent } from 'react';
+import { useState, type FC } from 'react';
 import { Input, Button, Select, Flex } from '@hubspot/ui-extensions';
 
 interface ContactFormProps {
@@ -15,17 +15,19 @@ const ContactForm: FC<ContactFormProps> = ({ onSubmit, existingContact }) => {
   const [name, setName] = useState(existingContact?.name || '');
   const [status, setStatus] = useState(existingContact?.status || 'ACTIVE');
 
-  const validateForm = () => {
+  // Minimal validation
+  const validateForm = (): boolean => {
     return email.trim() !== '' && name.trim() !== '';
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  // Instead of a <form> submit, we do a button onClick
+  const handleClick = () => {
     if (!validateForm()) {
       alert('Email and Name are required.');
       return;
     }
     onSubmit({ email, name, status });
+    // If adding a new contact, clear the fields
     if (!existingContact) {
       setEmail('');
       setName('');
@@ -34,38 +36,36 @@ const ContactForm: FC<ContactFormProps> = ({ onSubmit, existingContact }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Flex gap="small" direction="column">
-        <Input
-          name="email"
-          label="Email"
-          type="text"
-          value={email}
-          onInput={(val) => setEmail(val)}
-          required
-        />
-        <Input
-          name="name"
-          label="Name"
-          value={name}
-          onInput={(val) => setName(val)}
-          required
-        />
-        <Select
-          name="status"
-          label="Status"
-          value={status}
-          onChange={(val) => setStatus(String(val))}
-          options={[
-            { label: 'Active', value: 'ACTIVE' },
-            { label: 'Inactive', value: 'INACTIVE' },
-          ]}
-        />
-        <Button type="submit">
-          {existingContact ? 'Update Contact' : 'Add Contact'}
-        </Button>
-      </Flex>
-    </form>
+    <Flex direction="column" gap="small">
+      <Input
+        name="email"
+        label="Email"
+        type="text"
+        value={email}
+        onInput={(val) => setEmail(val)}
+        required
+      />
+      <Input
+        name="name"
+        label="Name"
+        value={name}
+        onInput={(val) => setName(val)}
+        required
+      />
+      <Select
+        name="status"
+        label="Status"
+        value={status}
+        onChange={(val) => setStatus(String(val))}
+        options={[
+          { label: 'Active', value: 'ACTIVE' },
+          { label: 'Inactive', value: 'INACTIVE' },
+        ]}
+      />
+      <Button onClick={handleClick}>
+        {existingContact ? 'Update Contact' : 'Add Contact'}
+      </Button>
+    </Flex>
   );
 };
 

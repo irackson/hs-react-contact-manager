@@ -9,7 +9,7 @@ interface ContactFilterProps {
 const ContactFilter: FC<ContactFilterProps> = ({ filter, onChangeFilter }) => {
   return (
     <Flex direction="column" gap="small">
-      <h1>Filter by status:</h1>
+      Filter by status:
       <Select
         name="statusFilter"
         value={filter}

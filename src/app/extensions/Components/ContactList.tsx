@@ -23,7 +23,7 @@ interface ContactListProps {
 
 const ContactList: FC<ContactListProps> = ({ contacts, onEdit, onDelete }) => {
   if (!contacts.length) {
-    return <p>No contacts found.</p>;
+    return <>No contacts found.</>;
   }
 
   return (
