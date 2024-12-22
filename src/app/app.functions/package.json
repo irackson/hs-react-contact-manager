@@ -1,13 +1,18 @@
 {
-  "name": "hubspot-example-function",
-  "version": "0.1.0",
-  "author": "HubSpot",
-  "license": "MIT",
+  "author": "Ian Rackson",
   "dependencies": {
     "@hubspot/api-client": "^7.0.1",
     "axios": "^0.27.2"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2"
-  }
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "license": "MIT",
+  "name": "hubspot-example-function",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "version": "0.1.0"
 }

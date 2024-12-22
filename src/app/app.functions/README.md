@@ -5,7 +5,7 @@ For example, if you wanted to add the `lodash` library in a serverless function,
 
 In this example we actually add overrides for two [preloaded packages](https://developers.hubspot.com/docs/cms/data/serverless-functions/reference#preloaded-packages) to demonstrate the ability to override versions of the preloaded packages.
 
-```
+```json
 {
   "name": "demo.functions",
   "version": "1.0.0",
@@ -13,7 +13,7 @@ In this example we actually add overrides for two [preloaded packages](https://d
   "dependencies": {
     "@hubspot/api-client": "^7.0.1",
     "axios": "^0.27.2",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.21"
   }
 }
 ```

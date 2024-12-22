@@ -1,7 +1,7 @@
 {
   "appFunctions": {
     "myFunc": {
-      "file": "example-function.ts",
+      "file": "serverless_dist/example-function.js",
       "secrets": []
     }
   }

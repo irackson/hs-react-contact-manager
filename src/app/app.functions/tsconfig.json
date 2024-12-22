@@ -1,19 +1,23 @@
 {
+	// A schema reference for editor IntelliSense (optional)
 	"$schema": "https://json.schemastore.org/tsconfig",
-	"display": "Serverless Functions Config",
 	"compilerOptions": {
+		"target": "ES2020",
 		"module": "CommonJS",
 		"moduleResolution": "node",
+		"outDir": "serverless_dist",
+		"noEmit": false,
+		"strict": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
 		"types": [
 			"node"
-		],
-		"strict": true,
-		"noEmit": true,
-		"resolveJsonModule": true
+		]
 	},
 	"include": [
-		"./**/*.ts",
-		"./**/*.mts",
+		"/**/*.ts"
 	],
 	"exclude": [
 		"node_modules"
