@@ -70,11 +70,11 @@ const ContactManager = () => {
           orderBy: [
             {
               propertyName: 'email',
-              ascending: false,
+              ascending: true,
             },
             {
               propertyName: 'hs_object_id',
-              ascending: false,
+              ascending: true,
             },
           ],
         } satisfies FetchContactsParameters,
@@ -193,7 +193,7 @@ const ContactManager = () => {
                 <TableCell>{`${contact.firstname} ${contact.lastname}`}</TableCell>
                 <TableCell>{contact.email}</TableCell>
                 <TableCell>
-                  {contact.hs_content_membership_status?.label || 'Unknown'}
+                  {contact.hs_content_membership_status?.label || '--'}
                 </TableCell>
                 <TableCell>
                   <Button
