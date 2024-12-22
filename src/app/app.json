@@ -14,8 +14,6 @@
   "scopes": [
     "crm.objects.contacts.read",
     "crm.objects.contacts.write",
-    "crm.objects.contacts.sensitive.read",
-    "crm.objects.contacts.sensitive.write",
     "crm.schemas.contacts.read",
     "crm.schemas.contacts.write",
     "collector.graphql_query.execute",
