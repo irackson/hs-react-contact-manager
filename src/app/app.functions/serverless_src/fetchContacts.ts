@@ -100,7 +100,7 @@ export const main = async ({
       offset: number;
       limit: number;
     };
-    orderBy: { propertyName: string; ascending: boolean };
+    orderBy: Array<{ propertyName: string; ascending: boolean }>;
     filter: { propertyName: string; value: string } | null;
   };
 }) => {
@@ -146,9 +146,10 @@ export const main = async ({
         variables: {
           limit,
           offset: incomingOffset,
-          orderBy: [
-            `${orderBy.propertyName}__${orderBy.ascending ? 'asc' : 'desc'}`,
-          ],
+          orderBy: orderBy.map(
+            ({ propertyName, ascending }) =>
+              `${propertyName}__${ascending ? 'asc' : 'desc'}`
+          ),
           ...filters,
         },
       },

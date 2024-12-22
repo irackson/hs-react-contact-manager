@@ -121,9 +121,7 @@ const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit },
         variables: {
             limit,
             offset: incomingOffset,
-            orderBy: [
-                `${orderBy.propertyName}__${orderBy.ascending ? 'asc' : 'desc'}`,
-            ],
+            orderBy: orderBy.map(({ propertyName, ascending }) => `${propertyName}__${ascending ? 'asc' : 'desc'}`),
             ...filters,
         },
     }, {

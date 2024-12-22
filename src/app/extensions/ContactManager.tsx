@@ -38,7 +38,7 @@ const ContactManager = () => {
     hasMore: null,
     total: null,
     offset: 0,
-    limit: 5,
+    limit: 25,
     currentPage: 1,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -67,10 +67,16 @@ const ContactManager = () => {
             limit: pageInfo.limit,
           },
           filter,
-          orderBy: {
-            propertyName: 'hs_object_id',
-            ascending: false,
-          },
+          orderBy: [
+            {
+              propertyName: 'email',
+              ascending: false,
+            },
+            {
+              propertyName: 'hs_object_id',
+              ascending: false,
+            },
+          ],
         } satisfies FetchContactsParameters,
       })) as FetchContactsResponse;
 
@@ -160,7 +166,7 @@ const ContactManager = () => {
           paginated={true}
           pageCount={
             typeof pageInfo.total === 'number'
-              ? Math.ceil(pageInfo.total / pageInfo.limit)
+              ? pageInfo.total / pageInfo.limit
               : 1
           }
           page={pageInfo.currentPage}
