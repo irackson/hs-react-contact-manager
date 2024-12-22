@@ -6,7 +6,7 @@ import {
   Text,
   hubspot,
 } from '@hubspot/ui-extensions';
-import { FetchContactsResponse } from '../app.functions/serverless_src/fetchContacts';
+import { type FetchContactsResponse } from '../app.functions/serverless_src/fetchContacts';
 
 hubspot.extend(() => <ContactManager />);
 

@@ -10,9 +10,9 @@ export const createQueryAndSuccessSchema = <
   const fields = Object.keys(desiredPropertiesSchema).join('\n            ');
 
   const query = gql`
-    query GetContacts($limit: Int, $offset: Int) {
+    query GetContacts($limit: Int, $offset: Int, $orderBy: [crm_contact_order_by!]) {
       CRM {
-        contact_collection(limit: $limit, offset: $offset) {
+        contact_collection(limit: $limit, offset: $offset, orderBy: $orderBy) {
           items {
             ${fields}
             _metadata {
@@ -87,13 +87,21 @@ export const createQueryAndSuccessSchema = <
 };
 
 export const main = async (context: {
-  parameters?: { limit?: number; after?: number };
+  parameters?: {
+    limit?: number;
+    after?: number;
+    orderBy?: string[];
+  };
 }) => {
   const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
   if (typeof token !== 'string' || token.trim().length === 0)
     throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
 
-  const { limit = 2, after = 0 } = context.parameters || {};
+  const {
+    limit = 5,
+    after = 0,
+    orderBy = ['createdate__asc'],
+  } = context.parameters || {};
 
   const { query, SuccessSchema } = createQueryAndSuccessSchema({
     email: z.string().email().optional(),
@@ -109,12 +117,10 @@ export const main = async (context: {
       .optional(),
   });
 
-  const variables = { limit, offset: after };
-
   const response = await axios
     .post(
       'https://api.hubapi.com/collector/graphql',
-      { query, variables },
+      { query, variables: { limit, offset: after, orderBy } },
       {
         headers: {
           'Content-Type': 'application/json',
