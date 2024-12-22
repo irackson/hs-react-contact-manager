@@ -21,6 +21,7 @@ const createQueryAndSuccessSchema = (desiredPropertiesSchema) => {
           }
           hasMore
           offset
+          total
         }
       }
     }
@@ -40,6 +41,7 @@ const createQueryAndSuccessSchema = (desiredPropertiesSchema) => {
                         .extend(desiredPropertiesSchema)),
                     hasMore: zod_1.z.boolean(),
                     offset: zod_1.z.number(),
+                    total: zod_1.z.number(),
                 }),
             }),
         }),
@@ -81,7 +83,7 @@ const createQueryAndSuccessSchema = (desiredPropertiesSchema) => {
     return { query, SuccessSchema };
 };
 exports.createQueryAndSuccessSchema = createQueryAndSuccessSchema;
-const main = async ({ parameters: { limit = 5, after = 0, orderBy = [{ propertyName: 'hs_object_id', ascending: false }], status, }, }) => {
+const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit }, orderBy, filter, }, }) => {
     const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
     if (typeof token !== 'string' || token.trim().length === 0)
         throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
@@ -98,15 +100,15 @@ const main = async ({ parameters: { limit = 5, after = 0, orderBy = [{ propertyN
             .nullable()
             .optional(),
     });
-    const filters = status
+    const filters = filter
         ? {
             filterGroups: [
                 {
                     filters: [
                         {
-                            propertyName: 'hs_content_membership_status',
+                            propertyName: filter.propertyName,
                             operator: 'EQ',
-                            value: status,
+                            value: filter.value,
                         },
                     ],
                 },
@@ -118,8 +120,10 @@ const main = async ({ parameters: { limit = 5, after = 0, orderBy = [{ propertyN
         query,
         variables: {
             limit,
-            offset: after,
-            orderBy: orderBy.map(({ propertyName, ascending }) => `${propertyName}__${ascending ? 'asc' : 'desc'}`),
+            offset: incomingOffset,
+            orderBy: [
+                `${orderBy.propertyName}__${orderBy.ascending ? 'asc' : 'desc'}`,
+            ],
             ...filters,
         },
     }, {
@@ -138,11 +142,12 @@ const main = async ({ parameters: { limit = 5, after = 0, orderBy = [{ propertyN
         console.log('Zod Error:', parsedResponse.error);
         throw new Error('Failed to fetch contacts');
     }
-    const { items: contacts, hasMore, offset, } = parsedResponse.data.data.CRM.contact_collection;
+    const { items, hasMore, offset, total } = parsedResponse.data.data.CRM.contact_collection;
     return {
-        contacts,
+        contacts: items,
         hasMore,
         offset,
+        total,
     };
 };
 exports.main = main;

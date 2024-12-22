@@ -21,6 +21,7 @@ export const createQueryAndSuccessSchema = <
           }
           hasMore
           offset
+          total
         }
       }
     }
@@ -42,6 +43,7 @@ export const createQueryAndSuccessSchema = <
           ),
           hasMore: z.boolean(),
           offset: z.number(),
+          total: z.number(),
         }),
       }),
     }),
@@ -88,17 +90,18 @@ export const createQueryAndSuccessSchema = <
 
 export const main = async ({
   parameters: {
-    limit = 5,
-    after = 0,
-    orderBy = [{ propertyName: 'hs_object_id', ascending: false }],
-    status,
+    pageInfo: { offset: incomingOffset, limit },
+    orderBy,
+    filter,
   },
 }: {
   parameters: {
-    limit?: number;
-    after?: number;
-    orderBy?: Array<{ propertyName: string; ascending: boolean }>;
-    status?: string;
+    pageInfo: {
+      offset: number;
+      limit: number;
+    };
+    orderBy: { propertyName: string; ascending: boolean };
+    filter: { propertyName: string; value: string } | null;
   };
 }) => {
   const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
@@ -119,15 +122,15 @@ export const main = async ({
       .optional(),
   });
 
-  const filters = status
+  const filters = filter
     ? {
         filterGroups: [
           {
             filters: [
               {
-                propertyName: 'hs_content_membership_status',
+                propertyName: filter.propertyName,
                 operator: 'EQ',
-                value: status,
+                value: filter.value,
               },
             ],
           },
@@ -142,11 +145,10 @@ export const main = async ({
         query,
         variables: {
           limit,
-          offset: after,
-          orderBy: orderBy.map(
-            ({ propertyName, ascending }) =>
-              `${propertyName}__${ascending ? 'asc' : 'desc'}`
-          ),
+          offset: incomingOffset,
+          orderBy: [
+            `${orderBy.propertyName}__${orderBy.ascending ? 'asc' : 'desc'}`,
+          ],
           ...filters,
         },
       },
@@ -169,16 +171,14 @@ export const main = async ({
     throw new Error('Failed to fetch contacts');
   }
 
-  const {
-    items: contacts,
-    hasMore,
-    offset,
-  } = parsedResponse.data.data.CRM.contact_collection;
+  const { items, hasMore, offset, total } =
+    parsedResponse.data.data.CRM.contact_collection;
 
   return {
-    contacts,
+    contacts: items,
     hasMore,
     offset,
+    total,
   };
 };
 

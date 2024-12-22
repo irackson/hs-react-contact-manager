@@ -28,12 +28,18 @@ const ContactManager = () => {
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [pageInfo, setPageInfo] = useState<{
-    hasNextPage: boolean;
-    endCursor: number;
-  }>({
-    hasNextPage: false,
-    endCursor: 0,
+  const [pageInfo, setPageInfo] = useState<
+    FetchContactsParameters['pageInfo'] & {
+      hasMore: boolean | null;
+      total: number | null;
+      currentPage: number;
+    }
+  >({
+    hasMore: null,
+    total: null,
+    offset: 0,
+    limit: 5,
+    currentPage: 1,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [currentContact, setCurrentContact] = useState<{
@@ -43,36 +49,40 @@ const ContactManager = () => {
     lastname: string;
     status: string;
   } | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>('All');
-  const [orderBy, setOrderBy] = useState<{
-    propertyName: string;
-    ascending: boolean;
-  }>({ propertyName: 'hs_object_id', ascending: false });
+  const [filter, setFilter] = useState<FetchContactsParameters['filter']>(null);
+  const [orderBy, setOrderBy] = useState<FetchContactsParameters['orderBy']>({
+    propertyName: 'hs_object_id',
+    ascending: false,
+  });
 
-  const fetchContacts = async (after: number = 0) => {
+  const fetchContacts = async () => {
     setLoading(true);
     setError(null);
     try {
       const {
         contacts: fetchedContacts,
-        hasMore,
-        offset,
+        hasMore: fetchedHasMore,
+        offset: fetchedOffset,
+        total: fetchedTotal,
       } = (await hubspot.serverless('fetchContacts', {
         parameters: {
-          limit: 5,
-          after,
-          status: filterStatus !== 'All' ? filterStatus : undefined,
-          orderBy: [
-            {
-              propertyName: orderBy.propertyName,
-              ascending: orderBy.ascending,
-            },
-          ],
+          pageInfo: {
+            offset: pageInfo.offset,
+            limit: pageInfo.limit,
+          },
+          filter,
+          orderBy,
         } satisfies FetchContactsParameters,
       })) as FetchContactsResponse;
 
       setContacts(fetchedContacts);
-      setPageInfo({ hasNextPage: hasMore, endCursor: offset });
+      setPageInfo(({ limit, currentPage }) => ({
+        currentPage,
+        limit,
+        hasMore: fetchedHasMore,
+        offset: fetchedOffset,
+        total: fetchedTotal,
+      }));
     } catch (err) {
       setError('Failed to fetch contacts');
     } finally {
@@ -82,7 +92,7 @@ const ContactManager = () => {
 
   useEffect(() => {
     fetchContacts();
-  }, [filterStatus, orderBy]);
+  }, []);
 
   const handleSaveContact = async () => {
     if (!currentContact) return;
@@ -124,20 +134,31 @@ const ContactManager = () => {
       </Button>
       <Select
         options={[
-          { label: 'All', value: 'All' },
-          { label: 'Active', value: 'Active' },
-          { label: 'Inactive', value: 'Inactive' },
+          { label: 'All', value: 'all' },
+          { label: 'Active', value: 'active' },
+          { label: 'Inactive', value: 'inactive' },
         ]}
-        value={filterStatus}
+        value={filter?.value ? filter.value : 'all'}
         onChange={(value) => {
-          setFilterStatus(value as string);
+          setFilter(
+            value === 'all'
+              ? null
+              : {
+                  propertyName: 'hs_content_membership_status',
+                  value: String(value),
+                }
+          );
           fetchContacts();
         }}
       />
       <Button
-        onClick={() =>
-          setOrderBy((prev) => ({ ...prev, ascending: !prev.ascending }))
-        }
+        onClick={() => {
+          setOrderBy(({ propertyName, ascending }) => ({
+            propertyName,
+            ascending: !ascending,
+          }));
+          fetchContacts();
+        }}
       >
         Toggle Order
       </Button>
@@ -148,8 +169,20 @@ const ContactManager = () => {
       ) : (
         <Table
           paginated={true}
-          pageCount={5}
-          onPageChange={(page) => fetchContacts(page * 5)}
+          pageCount={
+            typeof pageInfo.total === 'number'
+              ? Math.ceil(pageInfo.total / pageInfo.limit)
+              : 1
+          }
+          page={pageInfo.currentPage}
+          onPageChange={(newPageNumber) => {
+            setPageInfo((currPageInfo) => ({
+              ...currPageInfo,
+              offset: (newPageNumber - 1) * currPageInfo.limit,
+              currentPage: newPageNumber,
+            }));
+            fetchContacts();
+          }}
         >
           <TableHead>
             <TableRow>
