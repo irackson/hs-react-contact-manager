@@ -1,32 +1,34 @@
 import axios from 'axios';
 
 export const main = async (context: any = {}) => {
-  const { limit = 5, after } = context.parameters || {};
+  const { limit = 1, after = 0 } = context.parameters || {};
   const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
 
   const query = `
-    query GetContacts($limit: Int, $after: String) {
-      contacts(limit: $limit, after: $after) {
-        edges {
-          node {
-            id
-            properties {
-              email
-              firstname
-              lastname
-              hs_content_membership_status
+    query GetContacts($limit: Int, $offset: Int) {
+      CRM {
+        contact_collection(
+          limit: $limit,
+          offset: $offset,
+          orderBy: hs_object_id__desc
+        ) {
+          items {
+            _metadata {
+              id
             }
+            email
+            firstname
+            lastname
+            hs_content_membership_status
           }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
+          hasMore
+          offset
         }
       }
     }
   `;
 
-  const variables = { limit, after };
+  const variables = { limit, offset: after };
 
   try {
     const response = await axios.post(
@@ -39,15 +41,21 @@ export const main = async (context: any = {}) => {
         },
       }
     );
-
+    console.log({ response });
     const { data } = response;
+
     if (data.errors) {
       throw new Error(data.errors.map((err: any) => err.message).join(', '));
     }
+    console.log(JSON.stringify(response.data));
+    const contactCollection = data.data.CRM.contact_collection;
 
     return {
-      contacts: data.data.contacts.edges.map((edge: any) => edge.node),
-      pageInfo: data.data.contacts.pageInfo,
+      contacts: contactCollection.items,
+      pageInfo: {
+        hasNextPage: contactCollection.hasMore,
+        endCursor: contactCollection.offset,
+      },
     };
   } catch (error) {
     console.error('Error fetching contacts:', error);

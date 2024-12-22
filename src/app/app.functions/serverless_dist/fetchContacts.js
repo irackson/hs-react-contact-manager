@@ -6,30 +6,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.main = void 0;
 const axios_1 = __importDefault(require("axios"));
 const main = async (context = {}) => {
-    const { limit = 5, after } = context.parameters || {};
+    const { limit = 1, after = 0 } = context.parameters || {};
     const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
     const query = `
-    query GetContacts($limit: Int, $after: String) {
-      contacts(limit: $limit, after: $after) {
-        edges {
-          node {
-            id
-            properties {
-              email
-              firstname
-              lastname
-              hs_content_membership_status
+    query GetContacts($limit: Int, $offset: Int) {
+      CRM {
+        contact_collection(
+          limit: $limit,
+          offset: $offset,
+          orderBy: hs_object_id__desc
+        ) {
+          items {
+            _metadata {
+              id
             }
+            email
+            firstname
+            lastname
+            hs_content_membership_status
           }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
+          hasMore
+          offset
         }
       }
     }
   `;
-    const variables = { limit, after };
+    const variables = { limit, offset: after };
     try {
         const response = await axios_1.default.post('https://api.hubapi.com/collector/graphql', { query, variables }, {
             headers: {
@@ -37,13 +39,19 @@ const main = async (context = {}) => {
                 Authorization: `Bearer ${token}`,
             },
         });
+        console.log({ response });
         const { data } = response;
         if (data.errors) {
             throw new Error(data.errors.map((err) => err.message).join(', '));
         }
+        console.log(JSON.stringify(response.data));
+        const contactCollection = data.data.CRM.contact_collection;
         return {
-            contacts: data.data.contacts.edges.map((edge) => edge.node),
-            pageInfo: data.data.contacts.pageInfo,
+            contacts: contactCollection.items,
+            pageInfo: {
+                hasNextPage: contactCollection.hasMore,
+                endCursor: contactCollection.offset,
+            },
         };
     }
     catch (error) {
