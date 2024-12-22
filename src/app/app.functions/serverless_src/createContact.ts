@@ -29,7 +29,7 @@ export const main = async (context: any = {}) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.HUBSPOT_PRIVATE_APP_TOKEN}`,
+        Authorization: `Bearer ${process.env.PRIVATE_APP_ACCESS_TOKEN}`,
       },
       body: JSON.stringify({ query: mutation, variables }),
     });

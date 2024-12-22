@@ -94,3 +94,8 @@ Build a simple Contact Manager application in Hubspot with the following feature
   "response": "This is coming from a serverless function! You entered: sup"
 }
 ```
+
+## TODOs / Improvements
+
+- Make use of [onCrmPropertiesUpdate](https://developers.hubspot.com/docs/guides/crm/ui-extensions/sample-extensions/overview#contact-duplicator)
+- Replace runServerless with [hubspot.serverless](https://developers.hubspot.com/docs/guides/crm/ui-extensions/sdk#run-serverless-functions)

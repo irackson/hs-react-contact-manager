@@ -1,51 +1,56 @@
+import axios from 'axios';
+
 export const main = async (context: any = {}) => {
-  // context.parameters.* or context.queryParameters.* can hold limit/after
   const { limit = 5, after } = context.parameters || {};
+  const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
 
   const query = `
-    query getContacts($limit: Int!, $after: String) {
+    query GetContacts($limit: Int, $after: String) {
       contacts(limit: $limit, after: $after) {
-        results {
-          id
-          properties {
-            name
-            value
+        edges {
+          node {
+            id
+            properties {
+              email
+              firstname
+              lastname
+              hs_content_membership_status
+            }
           }
         }
-        paging {
-          next {
-            after
-          }
+        pageInfo {
+          hasNextPage
+          endCursor
         }
       }
     }
   `;
 
-  const variables = {
-    limit: typeof limit === 'string' ? parseInt(limit, 10) : limit,
-    after: after || null,
-  };
+  const variables = { limit, after };
 
   try {
-    const response = await fetch('https://api.hubapi.com/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.HUBSPOT_PRIVATE_APP_TOKEN}`,
-      },
-      body: JSON.stringify({ query, variables }),
-    });
+    const response = await axios.post(
+      'https://api.hubapi.com/collector/graphql',
+      { query, variables },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    const json = await response.json();
-    // Return the entire "contacts" object
+    const { data } = response;
+    if (data.errors) {
+      throw new Error(data.errors.map((err: any) => err.message).join(', '));
+    }
+
     return {
-      statusCode: 200,
-      body: JSON.stringify(json.data.contacts),
+      contacts: data.data.contacts.edges.map((edge: any) => edge.node),
+      pageInfo: data.data.contacts.pageInfo,
     };
-  } catch (error: any) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
-    };
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    throw new Error('Failed to fetch contacts');
   }
 };
