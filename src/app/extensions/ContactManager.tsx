@@ -50,10 +50,6 @@ const ContactManager = () => {
     status: string;
   } | null>(null);
   const [filter, setFilter] = useState<FetchContactsParameters['filter']>(null);
-  const [orderBy, setOrderBy] = useState<FetchContactsParameters['orderBy']>({
-    propertyName: 'hs_object_id',
-    ascending: false,
-  });
 
   const fetchContacts = async () => {
     setLoading(true);
@@ -71,7 +67,10 @@ const ContactManager = () => {
             limit: pageInfo.limit,
           },
           filter,
-          orderBy,
+          orderBy: {
+            propertyName: 'hs_object_id',
+            ascending: false,
+          },
         } satisfies FetchContactsParameters,
       })) as FetchContactsResponse;
 
@@ -151,17 +150,7 @@ const ContactManager = () => {
           fetchContacts();
         }}
       />
-      <Button
-        onClick={() => {
-          setOrderBy(({ propertyName, ascending }) => ({
-            propertyName,
-            ascending: !ascending,
-          }));
-          fetchContacts();
-        }}
-      >
-        Toggle Order
-      </Button>
+
       {contacts.length === 0 ? (
         <EmptyState title="No Contacts Found" flush={false}>
           <Text>Try adding a new contact or adjusting your filters.</Text>
