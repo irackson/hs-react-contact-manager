@@ -7,10 +7,10 @@ import {
   TableCell,
   Button,
 } from '@hubspot/ui-extensions';
-import { Contact } from '../types';
+import { FetchContactsResponse } from '../../app.functions/serverless_src/fetchContacts';
 
 interface ContactListProps {
-  contacts: Contact[];
+  contacts: FetchContactsResponse['contacts'];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }

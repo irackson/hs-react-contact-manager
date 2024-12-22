@@ -150,3 +150,4 @@ export const main = async (context: {
     offset,
   };
 };
+export type FetchContactsResponse = Awaited<ReturnType<typeof main>>;

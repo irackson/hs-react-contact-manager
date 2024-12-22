@@ -6,16 +6,21 @@ import {
   Text,
   hubspot,
 } from '@hubspot/ui-extensions';
-import type { Contact, PaginatedContactsResponse, PageInfo } from './types';
+import { FetchContactsResponse } from '../app.functions/serverless_src/fetchContacts';
 
 hubspot.extend(() => <ContactManager />);
 
 const ContactManager = () => {
   // Typed State Variables
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<FetchContactsResponse['contacts']>(
+    []
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [pageInfo, setPageInfo] = useState<PageInfo>({
+  const [pageInfo, setPageInfo] = useState<{
+    hasNextPage: FetchContactsResponse['hasMore'];
+    endCursor: FetchContactsResponse['offset'];
+  }>({
     hasNextPage: false,
     endCursor: null,
   });
@@ -32,7 +37,7 @@ const ContactManager = () => {
         offset: endCursor,
       } = (await hubspot.serverless('fetchContacts', {
         parameters: { limit: 5, after },
-      })) as PaginatedContactsResponse;
+      })) as FetchContactsResponse;
       setContacts((prev) => (after ? [...prev, ...contacts] : contacts));
       setPageInfo({
         endCursor,
