@@ -7,13 +7,7 @@ import {
   TableCell,
   Button,
 } from '@hubspot/ui-extensions';
-
-export interface Contact {
-  id: string;
-  email: string;
-  name: string;
-  status: string;
-}
+import { Contact } from '../types';
 
 interface ContactListProps {
   contacts: Contact[];
@@ -39,18 +33,24 @@ const ContactList: FC<ContactListProps> = ({ contacts, onEdit, onDelete }) => {
 
       <TableBody>
         {contacts.map((contact) => (
-          <TableRow key={contact.id}>
-            <TableCell>{contact.email}</TableCell>
-            <TableCell>{contact.name}</TableCell>
-            <TableCell>{contact.status}</TableCell>
+          <TableRow key={contact._metadata.id}>
+            <TableCell>{contact.email || 'N/A'}</TableCell>
+            <TableCell>
+              {`${contact.firstname || ''} ${contact.lastname || ''}`.trim()}
+            </TableCell>
+            <TableCell>
+              {contact.hs_content_membership_status?.label || 'Unknown'}
+            </TableCell>
             <TableCell>
               <Button
-                onClick={() => onEdit(contact.id)}
+                onClick={() => onEdit(contact._metadata.id)}
                 style={{ marginRight: 8 }}
               >
                 Edit
               </Button>
-              <Button onClick={() => onDelete(contact.id)}>Delete</Button>
+              <Button onClick={() => onDelete(contact._metadata.id)}>
+                Delete
+              </Button>
             </TableCell>
           </TableRow>
         ))}

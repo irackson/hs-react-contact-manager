@@ -2,10 +2,12 @@
   "author": "Ian Rackson",
   "dependencies": {
     "@hubspot/api-client": "^7.0.1",
-    "axios": "^0.27.2"
+    "axios": "^0.27.2",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "graphql-tag": "^2.12.6",
     "typescript": "^5.7.2"
   },
   "license": "MIT",
