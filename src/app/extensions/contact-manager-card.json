@@ -2,15 +2,15 @@
   "data": {
     "location": "crm.record.tab",
     "module": {
-      "file": "Example.tsx"
+      "file": "ContactManager.tsx"
     },
     "objectTypes": [
       {
         "name": "contacts"
       }
     ],
-    "title": "Example Card",
-    "uid": "get_started_card"
+    "title": "Contact Manager",
+    "uid": "contact_manager_card"
   },
   "type": "crm-card"
 }

@@ -1,5 +1,58 @@
 # Ian Rackson's Contact Manager HubSpot UI Extension
 
+## Project Prompt
+
+**Objective:**
+Build a simple Contact Manager application in Hubspot with the following features:
+
+- **Add Contacts:** Users can add new contacts with email, name and status.
+- **Update Contacts:** Users can update contact information.
+- **Delete Contacts:** Users can delete contacts.
+- **Contact Filtering:** Add filters to view all contacts or contacts by status.
+
+**Requirements:**
+
+**Frontend:**
+
+- Use Hubspot CMS React library to build a react application on the Hubspot CMS [Hubspot CMS React](https://github.hubspot.com/cms-react/)
+- Build a responsive UI (CSS is optional but encouraged).
+
+**Backend:**
+
+- **Fullstack developer candidates:** Use the Hubspot GraphQL API via serverless functions to interact with the contacts object.
+- **Frontend developer candidates:** Use local storage to mock the backend of the application.
+
+**Testing Skills:**
+
+- Write a function to validate the form (e.g., ensure the title is not empty).
+- Add basic error handling for API calls.
+
+**Evaluation Criteria:**
+
+**Code Quality:**
+
+- Clean, readable, and maintainable code.
+- Proper use of React best practices.
+- Version control - commit early and often.
+
+**Functionality:**
+
+- Application meets all the listed requirements.
+
+**Creativity:**
+
+- Bonus for adding extra features.
+
+**Testing:**
+
+- Bonus for including unit tests.
+
+**Instructions for Submission:**
+
+- Create a Hubspot Developer Account [Hubspot Developer Account](https://developers.hubspot.com/cms)
+- Complete the implementation based on the requirements.
+- Share your solution via GitHub.
+
 ## Relevant Docs
 
 - [UI Customization SDK](https://developers.hubspot.com/docs/guides/crm/ui-extensions/sdk)

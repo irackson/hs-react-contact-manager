@@ -1,7 +1,19 @@
 {
   "appFunctions": {
-    "myFunc": {
-      "file": "serverless_dist/example-function.js",
+    "createContact": {
+      "file": "serverless_dist/createContact.js",
+      "secrets": []
+    },
+    "deleteContact": {
+      "file": "serverless_dist/deleteContact.js",
+      "secrets": []
+    },
+    "fetchContacts": {
+      "file": "serverless_dist/fetchContacts.js",
+      "secrets": []
+    },
+    "updateContact": {
+      "file": "serverless_dist/updateContact.js",
       "secrets": []
     }
   }

@@ -17,7 +17,7 @@
 		]
 	},
 	"include": [
-		"/**/*.ts"
+		"serverless_src/**/*.ts"
 	],
 	"exclude": [
 		"node_modules"
