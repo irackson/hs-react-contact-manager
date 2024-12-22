@@ -5,6 +5,6 @@
     "react": "^18.2.0"
   },
   "license": "MIT",
-  "name": "hubspot-example-extension",
+  "name": "contact-manager-app",
   "version": "0.1.0"
 }

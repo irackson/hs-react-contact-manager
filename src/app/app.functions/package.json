@@ -9,7 +9,7 @@
     "typescript": "^5.7.2"
   },
   "license": "MIT",
-  "name": "hubspot-example-function",
+  "name": "contact-manager-app",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w"
