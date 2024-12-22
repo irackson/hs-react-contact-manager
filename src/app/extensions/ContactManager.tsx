@@ -1,96 +1,246 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
-  Flex,
+  Input,
+  Modal,
+  Table,
+  TableHead,
+  TableRow,
+  TableHeader,
+  TableBody,
+  TableCell,
+  EmptyState,
+  Select,
   LoadingSpinner,
   Text,
   hubspot,
 } from '@hubspot/ui-extensions';
-import { type FetchContactsResponse } from '../app.functions/serverless_src/fetchContacts';
+import {
+  type FetchContactsParameters,
+  type FetchContactsResponse,
+} from '../app.functions/serverless_src/fetchContacts';
 
 hubspot.extend(() => <ContactManager />);
 
 const ContactManager = () => {
-  // Typed State Variables
   const [contacts, setContacts] = useState<FetchContactsResponse['contacts']>(
     []
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [pageInfo, setPageInfo] = useState<{
-    hasNextPage: FetchContactsResponse['hasMore'];
-    endCursor: FetchContactsResponse['offset'];
+    hasNextPage: boolean;
+    endCursor: number;
   }>({
     hasNextPage: false,
-    endCursor: null,
+    endCursor: 0,
   });
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [currentContact, setCurrentContact] = useState<{
+    id?: string;
+    email: string;
+    firstname: string;
+    lastname: string;
+    status: string;
+  } | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [orderBy, setOrderBy] = useState<{
+    propertyName: string;
+    ascending: boolean;
+  }>({ propertyName: 'hs_object_id', ascending: false });
 
-  // Fetch Contacts Function
-  const fetchContacts = async (after: number | null = null) => {
+  const fetchContacts = async (after: number = 0) => {
     setLoading(true);
     setError(null);
-
     try {
       const {
-        contacts,
-        hasMore: hasNextPage,
-        offset: endCursor,
+        contacts: fetchedContacts,
+        hasMore,
+        offset,
       } = (await hubspot.serverless('fetchContacts', {
-        parameters: { limit: 5, after },
+        parameters: {
+          limit: 5,
+          after,
+          status: filterStatus !== 'All' ? filterStatus : undefined,
+          orderBy: [
+            {
+              propertyName: orderBy.propertyName,
+              ascending: orderBy.ascending,
+            },
+          ],
+        } satisfies FetchContactsParameters,
       })) as FetchContactsResponse;
-      setContacts((prev) => (after ? [...prev, ...contacts] : contacts));
-      setPageInfo({
-        endCursor,
-        hasNextPage,
-      });
+
+      setContacts(fetchedContacts);
+      setPageInfo({ hasNextPage: hasMore, endCursor: offset });
     } catch (err) {
-      console.error('Error:', err);
       setError('Failed to fetch contacts');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch Initial Data on Component Mount
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [filterStatus, orderBy]);
 
-  // Pagination Handler
-  const handleNextPage = () => {
-    if (pageInfo.hasNextPage) {
-      fetchContacts(pageInfo.endCursor);
+  const handleSaveContact = async () => {
+    if (!currentContact) return;
+    try {
+      await hubspot.serverless(
+        currentContact.id ? 'updateContact' : 'addContact',
+        {
+          parameters: currentContact,
+        }
+      );
+      setShowModal(false);
+      fetchContacts();
+    } catch (err) {
+      setError('Failed to save contact');
     }
   };
 
-  // Loading State
-  if (loading) {
-    return <LoadingSpinner label={'loading contacts'} />;
-  }
+  const handleDeleteContact = async (id: string) => {
+    try {
+      await hubspot.serverless('deleteContact', { parameters: { id } });
+      fetchContacts();
+    } catch (err) {
+      setError('Failed to delete contact');
+    }
+  };
 
-  // Error State
-  if (error) {
-    return <Text>{error}</Text>;
-  }
+  if (loading) return <LoadingSpinner label="Loading contacts..." />;
+  if (error) return <Text>{error}</Text>;
 
-  // Render Contacts
   return (
-    <Flex direction="column" gap="medium">
-      {contacts.map((contact) => (
-        <Flex key={contact._metadata.id} direction="row" justify="between">
-          <Text>
-            {`${contact.firstname || ''} ${contact.lastname || ''}`.trim()}
-          </Text>
-          <Text>{contact.email || 'N/A'}</Text>
-          <Text>
-            {contact.hs_content_membership_status?.label || 'Unknown'}
-          </Text>
-        </Flex>
-      ))}
-      {pageInfo.hasNextPage && (
-        <Button onClick={handleNextPage}>Load More</Button>
+    <>
+      <Button
+        onClick={() => {
+          setCurrentContact(null);
+          setShowModal(true);
+        }}
+      >
+        Add Contact
+      </Button>
+      <Select
+        options={[
+          { label: 'All', value: 'All' },
+          { label: 'Active', value: 'Active' },
+          { label: 'Inactive', value: 'Inactive' },
+        ]}
+        value={filterStatus}
+        onChange={(value) => {
+          setFilterStatus(value as string);
+          fetchContacts();
+        }}
+      />
+      <Button
+        onClick={() =>
+          setOrderBy((prev) => ({ ...prev, ascending: !prev.ascending }))
+        }
+      >
+        Toggle Order
+      </Button>
+      {contacts.length === 0 ? (
+        <EmptyState title="No Contacts Found" flush={false}>
+          <Text>Try adding a new contact or adjusting your filters.</Text>
+        </EmptyState>
+      ) : (
+        <Table
+          paginated={true}
+          pageCount={5}
+          onPageChange={(page) => fetchContacts(page * 5)}
+        >
+          <TableHead>
+            <TableRow>
+              <TableHeader>Name</TableHeader>
+              <TableHeader>Email</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Actions</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {contacts.map((contact) => (
+              <TableRow key={contact._metadata.id}>
+                <TableCell>{`${contact.firstname} ${contact.lastname}`}</TableCell>
+                <TableCell>{contact.email}</TableCell>
+                <TableCell>
+                  {contact.hs_content_membership_status?.label || 'Unknown'}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    onClick={() => {
+                      setCurrentContact({
+                        id: contact._metadata.id,
+                        email: contact.email || '',
+                        firstname: contact.firstname || '',
+                        lastname: contact.lastname || '',
+                        status:
+                          contact.hs_content_membership_status?.value ||
+                          'Inactive',
+                      });
+                      setShowModal(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteContact(contact._metadata.id)}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
-    </Flex>
+      {showModal && (
+        <Modal
+          id="contact-modal"
+          title={currentContact ? 'Edit Contact' : 'Add Contact'}
+          onClose={() => setShowModal(false)}
+        >
+          <Input
+            label="First Name"
+            name="firstname"
+            value={currentContact?.firstname || ''}
+            onChange={(value) =>
+              setCurrentContact({ ...currentContact, firstname: value })
+            }
+          />
+          <Input
+            label="Last Name"
+            name="lastname"
+            value={currentContact?.lastname || ''}
+            onChange={(value) =>
+              setCurrentContact({ ...currentContact, lastname: value })
+            }
+          />
+          <Input
+            label="Email"
+            name="email"
+            value={currentContact?.email || ''}
+            onChange={(value) =>
+              setCurrentContact({ ...currentContact, email: value })
+            }
+          />
+          <Select
+            label="Status"
+            name="status"
+            options={[
+              { label: 'Active', value: 'Active' },
+              { label: 'Inactive', value: 'Inactive' },
+            ]}
+            value={currentContact?.status || 'Active'}
+            onChange={(value) =>
+              setCurrentContact({ ...currentContact, status: value as string })
+            }
+          />
+          <Button onClick={handleSaveContact}>Save</Button>
+        </Modal>
+      )}
+    </>
   );
 };
 

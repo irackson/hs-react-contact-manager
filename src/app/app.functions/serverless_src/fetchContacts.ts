@@ -25,7 +25,7 @@ export const createQueryAndSuccessSchema = <
       }
     }
   `.loc?.source?.body;
-  if (!query) throw new Error('Failed to generate graphql query string');
+  if (!query) throw new Error('Failed to generate GraphQL query string');
 
   const SuccessSchema = z.object({
     data: z.object({
@@ -86,22 +86,24 @@ export const createQueryAndSuccessSchema = <
   return { query, SuccessSchema };
 };
 
-export const main = async (context: {
-  parameters?: {
+export const main = async ({
+  parameters: {
+    limit = 5,
+    after = 0,
+    orderBy = [{ propertyName: 'hs_object_id', ascending: false }],
+    status,
+  },
+}: {
+  parameters: {
     limit?: number;
     after?: number;
-    orderBy?: string[];
+    orderBy?: Array<{ propertyName: string; ascending: boolean }>;
+    status?: string;
   };
 }) => {
   const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
   if (typeof token !== 'string' || token.trim().length === 0)
     throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
-
-  const {
-    limit = 5,
-    after = 0,
-    orderBy = ['createdate__asc'],
-  } = context.parameters || {};
 
   const { query, SuccessSchema } = createQueryAndSuccessSchema({
     email: z.string().email().optional(),
@@ -117,10 +119,37 @@ export const main = async (context: {
       .optional(),
   });
 
+  const filters = status
+    ? {
+        filterGroups: [
+          {
+            filters: [
+              {
+                propertyName: 'hs_content_membership_status',
+                operator: 'EQ',
+                value: status,
+              },
+            ],
+          },
+        ],
+      }
+    : {};
+
   const response = await axios
     .post(
       'https://api.hubapi.com/collector/graphql',
-      { query, variables: { limit, offset: after, orderBy } },
+      {
+        query,
+        variables: {
+          limit,
+          offset: after,
+          orderBy: orderBy.map(
+            ({ propertyName, ascending }) =>
+              `${propertyName}__${ascending ? 'asc' : 'desc'}`
+          ),
+          ...filters,
+        },
+      },
       {
         headers: {
           'Content-Type': 'application/json',
@@ -132,10 +161,6 @@ export const main = async (context: {
       console.error('Error:', err);
       throw new Error(`Failed to fetch contacts: ${err.message}`);
     });
-
-  console.log(
-    `Received graphql response status: ${response.status} [${response.statusText}]`
-  );
 
   const parsedResponse = SuccessSchema.safeParse(response.data);
   if (!parsedResponse.success) {
@@ -156,4 +181,6 @@ export const main = async (context: {
     offset,
   };
 };
+
+export type FetchContactsParameters = Parameters<typeof main>[0]['parameters'];
 export type FetchContactsResponse = Awaited<ReturnType<typeof main>>;

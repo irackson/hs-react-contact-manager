@@ -26,7 +26,7 @@ const createQueryAndSuccessSchema = (desiredPropertiesSchema) => {
     }
   `.loc?.source?.body;
     if (!query)
-        throw new Error('Failed to generate graphql query string');
+        throw new Error('Failed to generate GraphQL query string');
     const SuccessSchema = zod_1.z.object({
         data: zod_1.z.object({
             CRM: zod_1.z.object({
@@ -81,11 +81,10 @@ const createQueryAndSuccessSchema = (desiredPropertiesSchema) => {
     return { query, SuccessSchema };
 };
 exports.createQueryAndSuccessSchema = createQueryAndSuccessSchema;
-const main = async (context) => {
+const main = async ({ parameters: { limit = 5, after = 0, orderBy = [{ propertyName: 'hs_object_id', ascending: false }], status, }, }) => {
     const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
     if (typeof token !== 'string' || token.trim().length === 0)
         throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
-    const { limit = 5, after = 0, orderBy = ['createdate__asc'], } = context.parameters || {};
     const { query, SuccessSchema } = (0, exports.createQueryAndSuccessSchema)({
         email: zod_1.z.string().email().optional(),
         firstname: zod_1.z.string().optional(),
@@ -99,8 +98,31 @@ const main = async (context) => {
             .nullable()
             .optional(),
     });
+    const filters = status
+        ? {
+            filterGroups: [
+                {
+                    filters: [
+                        {
+                            propertyName: 'hs_content_membership_status',
+                            operator: 'EQ',
+                            value: status,
+                        },
+                    ],
+                },
+            ],
+        }
+        : {};
     const response = await axios_1.default
-        .post('https://api.hubapi.com/collector/graphql', { query, variables: { limit, offset: after, orderBy } }, {
+        .post('https://api.hubapi.com/collector/graphql', {
+        query,
+        variables: {
+            limit,
+            offset: after,
+            orderBy: orderBy.map(({ propertyName, ascending }) => `${propertyName}__${ascending ? 'asc' : 'desc'}`),
+            ...filters,
+        },
+    }, {
         headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -110,7 +132,6 @@ const main = async (context) => {
         console.error('Error:', err);
         throw new Error(`Failed to fetch contacts: ${err.message}`);
     });
-    console.log(`Received graphql response status: ${response.status} [${response.statusText}]`);
     const parsedResponse = SuccessSchema.safeParse(response.data);
     if (!parsedResponse.success) {
         console.error(`Unexpected response: ${JSON.stringify(response.data)}`);
