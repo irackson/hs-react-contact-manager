@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Button,
   Table,
@@ -13,13 +13,13 @@ import {
   Text,
   hubspot,
 } from '@hubspot/ui-extensions';
-import { CrmPropertyList } from '@hubspot/ui-extensions/crm';
+import { CrmPropertyList, CrmActionButton } from '@hubspot/ui-extensions/crm';
 import {
   type FetchContactsParameters,
   type FetchContactsResponse,
 } from '../app.functions/serverless_src/fetchContacts';
 
-hubspot.extend(() => <ContactManager />);
+hubspot.extend(({ actions }) => <ContactManager addAlert={actions.addAlert} />);
 
 const initialPageInfo: FetchContactsParameters['pageInfo'] & {
   hasMore: boolean | null;
@@ -34,12 +34,15 @@ const initialPageInfo: FetchContactsParameters['pageInfo'] & {
   currentPage: 1,
   contacts: [],
 };
-const ContactManager = () => {
+const ContactManager = ({
+  addAlert,
+}: {
+  addAlert: (args: { type: 'success'; message: string }) => void;
+}) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const [pageInfo, setPageInfo] = useState(initialPageInfo);
-
   const [statusFilterOptions, setStatusFilterOptions] = useState<
     FetchContactsParameters['statusFilterOptions']
   >({
@@ -50,49 +53,52 @@ const ContactManager = () => {
 
   const [focusedContactId, setFocusedContactId] = useState<string | null>(null);
 
-  const fetchContacts = async (withPagingReset = false) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const {
-        contacts: fetchedContacts,
-        hasMore: fetchedHasMore,
-        offset: fetchedOffset,
-        total: fetchedTotal,
-      } = (await hubspot.serverless('fetchContacts', {
-        parameters: {
-          pageInfo: {
-            offset: withPagingReset ? 0 : pageInfo.offset,
-            limit: pageInfo.limit,
-          },
-          statusFilterOptions,
-          orderBy: [
-            {
-              propertyName: 'email',
-              ascending: true,
+  const fetchContacts = useCallback(
+    async (withPagingReset = false) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const {
+          contacts: fetchedContacts,
+          hasMore: fetchedHasMore,
+          offset: fetchedOffset,
+          total: fetchedTotal,
+        } = (await hubspot.serverless('fetchContacts', {
+          parameters: {
+            pageInfo: {
+              offset: withPagingReset ? 0 : pageInfo.offset,
+              limit: pageInfo.limit,
             },
-            {
-              propertyName: 'hs_object_id',
-              ascending: true,
-            },
-          ],
-        } satisfies FetchContactsParameters,
-      })) as FetchContactsResponse;
+            statusFilterOptions,
+            orderBy: [
+              {
+                propertyName: 'email',
+                ascending: true,
+              },
+              {
+                propertyName: 'hs_object_id',
+                ascending: true,
+              },
+            ],
+          } satisfies FetchContactsParameters,
+        })) as FetchContactsResponse;
 
-      setPageInfo(({ limit, currentPage }) => ({
-        currentPage: withPagingReset ? 1 : currentPage,
-        limit,
-        hasMore: fetchedHasMore,
-        offset: fetchedOffset,
-        total: fetchedTotal,
-        contacts: fetchedContacts,
-      }));
-    } catch (err) {
-      setError('Failed to fetch contacts');
-    } finally {
-      setLoading(false);
-    }
-  };
+        setPageInfo(({ limit, currentPage }) => ({
+          currentPage: withPagingReset ? 1 : currentPage,
+          limit,
+          hasMore: fetchedHasMore,
+          offset: fetchedOffset,
+          total: fetchedTotal,
+          contacts: fetchedContacts,
+        }));
+      } catch (err) {
+        setError('Failed to fetch contacts');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pageInfo.offset, pageInfo.limit, statusFilterOptions]
+  );
 
   useEffect(() => {
     if (
@@ -102,20 +108,40 @@ const ContactManager = () => {
     )
       return;
     fetchContacts(true);
-  }, [statusFilterOptions]);
+  }, [statusFilterOptions, fetchContacts]);
 
-  const handleDeleteContact = async (id: string) => {
-    try {
-      await hubspot.serverless('deleteContact', { parameters: { id } });
-      fetchContacts();
-    } catch (err) {
-      setError('Failed to delete contact');
-    }
-  };
+  /**
+   * Handle Delete Contact
+   * Calls the deleteContact serverless function, refetches, and displays an alert.
+   */
+  const handleDeleteContact = async ({
+    id,
+    email,
+  }: {
+    id: string;
+    email: string | undefined;
+  }) =>
+    await hubspot
+      .serverless('deleteContact', {
+        parameters: { id },
+      })
+      .then(async () => {
+        addAlert?.({
+          type: 'success',
+          message: `The delete of Contact ${
+            email?.length ? email : id
+          } has successfully occurred.`,
+        });
+        await fetchContacts();
+      })
+      .catch((err) => {
+        setError('Failed to delete contact');
+      });
 
   const handleCreateContact = async () => {
     try {
       const { id } = await hubspot.serverless('createContact');
+      fetchContacts(true);
       setFocusedContactId(id);
     } catch (err) {
       setError('Failed to create new contact');
@@ -127,19 +153,21 @@ const ContactManager = () => {
 
   return (
     <>
-      <Button onClick={handleCreateContact}>{`Create New Contact`}</Button>
+      <Button onClick={handleCreateContact}>Create New Contact</Button>
 
-      <CrmPropertyList
-        properties={[
-          'email',
-          'firstname',
-          'lastname',
-          'hs_content_membership_status',
-        ]}
-        direction="row"
-        objectTypeId="0-1"
-        objectId={Number(focusedContactId) ?? undefined}
-      />
+      {focusedContactId && (
+        <CrmPropertyList
+          properties={[
+            'email',
+            'firstname',
+            'lastname',
+            'hs_content_membership_status',
+          ]}
+          direction="row"
+          objectTypeId="0-1"
+          objectId={Number(focusedContactId)}
+        />
+      )}
 
       <MultiSelect
         value={(() => {
@@ -153,7 +181,7 @@ const ContactManager = () => {
         placeholder="Filter by Status"
         label="Select Status(es)"
         name="statusFilter"
-        onChange={async (value) => {
+        onChange={(value) => {
           setStatusFilterOptions({
             includeActive: value.includes('active'),
             includeInactive: value.includes('inactive'),
@@ -176,7 +204,7 @@ const ContactManager = () => {
         </EmptyState>
       ) : (
         <Table
-          paginated={true}
+          paginated
           pageCount={
             typeof pageInfo.total === 'number'
               ? pageInfo.total / pageInfo.limit
@@ -184,9 +212,9 @@ const ContactManager = () => {
           }
           page={pageInfo.currentPage}
           onPageChange={(newPageNumber) => {
-            setPageInfo((currPageInfo) => ({
-              ...currPageInfo,
-              offset: (newPageNumber - 1) * currPageInfo.limit,
+            setPageInfo((curr) => ({
+              ...curr,
+              offset: (newPageNumber - 1) * curr.limit,
               currentPage: newPageNumber,
             }));
             fetchContacts();
@@ -201,21 +229,21 @@ const ContactManager = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {pageInfo.contacts.map(
-              ({
+            {pageInfo.contacts.map((contact) => {
+              const {
                 firstname,
                 lastname,
                 email,
                 hs_content_membership_status,
                 _metadata: { id },
-              }) => (
+              } = contact;
+
+              return (
                 <TableRow key={id}>
                   <TableCell>
-                    {`${
-                      firstname?.length > 0 || lastname?.length > 0
-                        ? `${firstname} ${lastname}`
-                        : '--'
-                    }`}
+                    {firstname?.length > 0 || lastname?.length > 0
+                      ? `${firstname} ${lastname}`
+                      : '--'}
                   </TableCell>
                   <TableCell>{email?.length > 0 ? email : '--'}</TableCell>
                   <TableCell>
@@ -229,13 +257,26 @@ const ContactManager = () => {
                     >
                       Edit
                     </Button>
-                    <Button onClick={() => handleDeleteContact(id)}>
+
+                    <Button onClick={() => handleDeleteContact({ id, email })}>
                       Delete
                     </Button>
+
+                    <CrmActionButton
+                      actionType="RECORD_APP_LINK"
+                      actionContext={{
+                        objectTypeId: '0-1',
+                        objectId: Number(id),
+                        includeEschref: true,
+                      }}
+                      variant="secondary"
+                    >
+                      View
+                    </CrmActionButton>
                   </TableCell>
                 </TableRow>
-              )
-            )}
+              );
+            })}
           </TableBody>
         </Table>
       )}

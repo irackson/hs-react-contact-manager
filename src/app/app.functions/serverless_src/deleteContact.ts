@@ -1,37 +1,39 @@
-export const main = async (context: any = {}) => {
-  // Expect { contactId }
-  const body = JSON.parse(context.body || '{}');
-  const { contactId } = body;
+import axios from 'axios';
 
-  const mutation = `
-    mutation deleteContact($id: String!) {
-      deleteContact(id: $id) {
-        id
-      }
-    }
-  `;
+export const main = async ({
+  parameters,
+}: {
+  parameters: { id: string; email?: string };
+}) => {
+  const { id, email } = parameters;
+  if (!id || typeof id !== 'string' || !id.trim()) {
+    throw new Error('A valid contact id must be provided');
+  }
 
-  const variables = { id: contactId };
+  const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
+  if (!token) {
+    throw new Error('Missing PRIVATE_APP_ACCESS_TOKEN');
+  }
+
+  const url = `https://api.hubapi.com/crm/v3/objects/contacts/${id}`;
 
   try {
-    const response = await fetch('https://api.hubapi.com/graphql', {
-      method: 'POST',
+    const response = await axios.delete(url, {
       headers: {
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.PRIVATE_APP_ACCESS_TOKEN}`,
       },
-      body: JSON.stringify({ query: mutation, variables }),
+      validateStatus: () => true,
     });
 
-    const json = await response.json();
-    return {
-      statusCode: 200,
-      body: JSON.stringify(json.data),
-    };
-  } catch (error: any) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
-    };
+    if (response.status !== 204) {
+      throw new Error(
+        `Failed to delete contact. Expected status 204, but got ${response.status}`
+      );
+    }
+
+    return { id, email: email || '' };
+  } catch (error) {
+    throw new Error(`Failed to delete contact: ${error}`);
   }
 };
