@@ -45,45 +45,52 @@ const createQueryAndSuccessSchema = (desiredPropertiesSchema, filterString) => {
                 }),
             }),
         }),
-        extensions: zod_1.z
-            .object({
-            query_complexity: zod_1.z.object({
-                max_points: zod_1.z.number(),
-                used_points: zod_1.z.number(),
-                points_for_internal_api_requests: zod_1.z.object({
-                    count: zod_1.z.number(),
-                    weight: zod_1.z.number(),
-                    used_points: zod_1.z.number(),
-                }),
-                points_for_objects_retrieved: zod_1.z.object({
-                    count: zod_1.z.number(),
-                    weight: zod_1.z.number(),
-                    used_points: zod_1.z.number(),
-                }),
-                points_for_properties_with_value: zod_1.z.object({
-                    count: zod_1.z.number(),
-                    weight: zod_1.z.number(),
-                    used_points: zod_1.z.number(),
-                }),
-                points_for_properties_without_value: zod_1.z.object({
-                    count: zod_1.z.number(),
-                    weight: zod_1.z.number(),
-                    used_points: zod_1.z.number(),
-                }),
+        extensions: zod_1.z.unknown().optional(),
+        /* extensions: z
+          .object({
+            query_complexity: z.object({
+              max_points: z.number(),
+              used_points: z.number(),
+              points_for_internal_api_requests: z.object({
+                count: z.number(),
+                weight: z.number(),
+                used_points: z.number(),
+              }),
+              points_for_objects_retrieved: z.object({
+                count: z.number(),
+                weight: z.number(),
+                used_points: z.number(),
+              }),
+              points_for_properties_with_value: z.object({
+                count: z.number(),
+                weight: z.number(),
+                used_points: z.number(),
+              }),
+              points_for_properties_without_value: z.object({
+                count: z.number(),
+                weight: z.number(),
+                used_points: z.number(),
+              }),
             }),
-            rate_limit_info: zod_1.z.array(zod_1.z.object({
-                interval: zod_1.z.number(),
-                interval_unit: zod_1.z.string(),
-                max_points: zod_1.z.number(),
-                remaining_points: zod_1.z.number(),
-            })),
-        })
-            .optional(),
+            rate_limit_info: z.array(
+              z.object({
+                interval: z.number(),
+                interval_unit: z.string(),
+                max_points: z.number(),
+                remaining_points: z.number(),
+              })
+            ),
+          })
+          .optional(), */
     });
     return { query, SuccessSchema };
 };
 exports.createQueryAndSuccessSchema = createQueryAndSuccessSchema;
-const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit }, orderBy, statusFilterOptions, }, }) => {
+const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit }, orderBy, statusFilterOptions = {
+    includeActive: true,
+    includeInactive: true,
+    includeEmpty: true,
+}, }, }) => {
     const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
     if (typeof token !== 'string' || token.trim().length === 0)
         throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
@@ -126,6 +133,7 @@ const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit },
             .nullable()
             .optional(),
     }, filterString);
+    console.info(`Searching for contacts with filter: ${filterString}`);
     const response = await axios_1.default
         .post('https://api.hubapi.com/collector/graphql', {
         query,

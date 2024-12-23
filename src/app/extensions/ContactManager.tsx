@@ -18,6 +18,7 @@ import {
   type FetchContactsParameters,
   type FetchContactsResponse,
 } from '../app.functions/serverless_src/fetchContacts';
+import { type CreateContactsParameters } from '../app.functions/serverless_src/createContact';
 
 hubspot.extend(({ actions }) => (
   <ContactManager addAlert={actions['addAlert']} />
@@ -32,7 +33,7 @@ const initialPageInfo: FetchContactsParameters['pageInfo'] & {
   hasMore: null,
   total: null,
   offset: 0,
-  limit: 25,
+  limit: 5,
   currentPage: 1,
   contacts: [],
 };
@@ -135,7 +136,7 @@ const ContactManager = ({
             email?.length ? email : id
           } has successfully occurred.`,
         });
-        await fetchContacts();
+        await fetchContacts(true);
       })
       .catch((err) => {
         addAlert({
@@ -150,20 +151,32 @@ const ContactManager = ({
 
   const handleCreateContact = async () => {
     try {
-      const { id } = await hubspot.serverless('createContact');
+      setLoading(true);
+      const { id } = await hubspot.serverless('createContact', {
+        parameters: {
+          waitForSearchIndexUpdate: true,
+        } satisfies CreateContactsParameters,
+      });
       fetchContacts(true);
       setFocusedContactId(id);
+      setLoading(false);
     } catch (err) {
       setError('Failed to create new contact');
     }
   };
 
-  if (loading) return <LoadingSpinner label="Loading contacts..." />;
+  if (loading) return <LoadingSpinner label="Loading..." />;
   if (error) return <Text>{error}</Text>;
 
   return (
     <>
-      <Button onClick={handleCreateContact}>Create New Contact</Button>
+      <Button
+        onClick={async () => {
+          await handleCreateContact();
+        }}
+      >
+        Create New Contact
+      </Button>
 
       {focusedContactId && (
         <CrmPropertyList

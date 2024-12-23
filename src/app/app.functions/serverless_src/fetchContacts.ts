@@ -48,7 +48,8 @@ export const createQueryAndSuccessSchema = <
         }),
       }),
     }),
-    extensions: z
+    extensions: z.unknown().optional(),
+    /* extensions: z
       .object({
         query_complexity: z.object({
           max_points: z.number(),
@@ -83,7 +84,7 @@ export const createQueryAndSuccessSchema = <
           })
         ),
       })
-      .optional(),
+      .optional(), */
   });
 
   return { query, SuccessSchema };
@@ -93,7 +94,11 @@ export const main = async ({
   parameters: {
     pageInfo: { offset: incomingOffset, limit },
     orderBy,
-    statusFilterOptions,
+    statusFilterOptions = {
+      includeActive: true,
+      includeInactive: true,
+      includeEmpty: true,
+    },
   },
 }: {
   parameters: {
@@ -102,7 +107,7 @@ export const main = async ({
       limit: number;
     };
     orderBy: Array<{ propertyName: string; ascending: boolean }>;
-    statusFilterOptions: {
+    statusFilterOptions?: {
       includeActive: boolean;
       includeInactive: boolean;
       includeEmpty: boolean;
@@ -171,6 +176,7 @@ export const main = async ({
     filterString
   );
 
+  console.info(`Searching for contacts with filter: ${filterString}`);
   const response = await axios
     .post(
       'https://api.hubapi.com/collector/graphql',
