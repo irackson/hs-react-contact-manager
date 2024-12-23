@@ -56,6 +56,7 @@ Build a simple Contact Manager application in Hubspot with the following feature
 
 - [x] Create a Hubspot Developer Account [Hubspot Developer Account](https://developers.hubspot.com/cms)
       _[Rackson_Test_Portal_A8](https://app.hubspot.com/contacts/48631558/record/0-1/86494764070)_
+      _[Project in Portal](https://app.hubspot.com/developer-projects/48631558/project/hs-react-contact-manager)_
 - [x] Complete the implementation based on the requirements.
 - [x] Share your solution via GitHub.
       [see project on GitHub](https://github.com/irackson/hs-react-contact-manager)
@@ -69,4 +70,3 @@ Build a simple Contact Manager application in Hubspot with the following feature
 - [Card Location Options](https://knowledge.hubspot.com/object-settings/customize-records)
 - [Figma Design Kit](https://developers.hubspot.com/docs/reference/ui-components/figma-design-kit)
 - [GraphiQL Playground in Portal](https://app.hubspot.com/graphiql/48631558)
-- [Project in Portal](https://app.hubspot.com/developer-projects/48631558/project/hs-react-contact-manager)
