@@ -6,10 +6,10 @@ import * as assert from 'node:assert';
 
 test('Required ENV Variables are Defined', () => {
   assert.equal(
-    typeof process.env['PRIVATE_APP_ACCESS_TOKEN'] === 'string' &&
-      process.env['PRIVATE_APP_ACCESS_TOKEN'].trim().length > 0,
+    typeof process.env['PRIVATE_APP_ACCESS_TOKEN_SECRET'] === 'string' &&
+      process.env['PRIVATE_APP_ACCESS_TOKEN_SECRET'].trim().length > 0,
     true,
-    'Missing PRIVATE_APP_ACCESS_TOKEN'
+    'Missing PRIVATE_APP_ACCESS_TOKEN_SECRET'
   );
 });
 
@@ -125,9 +125,9 @@ export const main = async ({
     };
   };
 }) => {
-  const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
+  const token = process.env['PRIVATE_APP_ACCESS_TOKEN_SECRET'];
   if (typeof token !== 'string' || token.trim().length === 0)
-    throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
+    throw Error('Missing PRIVATE_APP_ACCESS_TOKEN_SECRET');
 
   const filterString = (() => {
     if (

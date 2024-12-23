@@ -62,9 +62,9 @@ export const main = async ({
     waitForSearchIndexUpdate?: boolean;
   };
 }) => {
-  const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
+  const token = process.env['PRIVATE_APP_ACCESS_TOKEN_SECRET'];
   if (!token) {
-    throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
+    throw Error('Missing PRIVATE_APP_ACCESS_TOKEN_SECRET');
   }
 
   const response = await axios.post(

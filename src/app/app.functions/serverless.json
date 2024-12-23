@@ -3,19 +3,19 @@
     "createContact": {
       "file": "serverless_dist/createContact.js",
       "secrets": [
-        "PRIVATE_APP_ACCESS_TOKEN"
+        "PRIVATE_APP_ACCESS_TOKEN_SECRET"
       ]
     },
     "deleteContact": {
       "file": "serverless_dist/deleteContact.js",
       "secrets": [
-        "PRIVATE_APP_ACCESS_TOKEN"
+        "PRIVATE_APP_ACCESS_TOKEN_SECRET"
       ]
     },
     "fetchContacts": {
       "file": "serverless_dist/fetchContacts.js",
       "secrets": [
-        "PRIVATE_APP_ACCESS_TOKEN"
+        "PRIVATE_APP_ACCESS_TOKEN_SECRET"
       ]
     }
   }

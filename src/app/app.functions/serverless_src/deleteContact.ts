@@ -10,9 +10,9 @@ export const main = async ({
     throw Error('A valid contact id must be provided to perform a delete');
   }
 
-  const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
+  const token = process.env['PRIVATE_APP_ACCESS_TOKEN_SECRET'];
   if (!token) {
-    throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
+    throw Error('Missing PRIVATE_APP_ACCESS_TOKEN_SECRET');
   }
 
   const url = `https://api.hubapi.com/crm/v3/objects/contacts/${id}`;
