@@ -45,4 +45,8 @@ module.exports = {
       }),
     ],
   },
+  externals: {
+    '@hubspot/api-client': '@hubspot/api-client',
+    axios: 'axios',
+  },
 };
