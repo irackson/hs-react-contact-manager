@@ -11,6 +11,7 @@ import {
   MultiSelect,
   LoadingSpinner,
   Text,
+  Flex,
   hubspot,
 } from '@hubspot/ui-extensions';
 import { CrmPropertyList, CrmActionButton } from '@hubspot/ui-extensions/crm';
@@ -37,6 +38,7 @@ const initialPageInfo: FetchContactsParameters['pageInfo'] & {
   currentPage: 1,
   contacts: [],
 };
+
 const ContactManager = ({
   addAlert,
 }: {
@@ -48,7 +50,6 @@ const ContactManager = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [pageInfo, setPageInfo] = useState(initialPageInfo);
   const [statusFilterOptions, setStatusFilterOptions] = useState<
     FetchContactsParameters['statusFilterOptions']
@@ -172,14 +173,6 @@ const ContactManager = ({
 
   return (
     <>
-      <Button
-        onClick={async () => {
-          await handleCreateContact();
-        }}
-      >
-        Create New Contact
-      </Button>
-
       {focusedContactId && (
         <CrmPropertyList
           properties={[
@@ -205,11 +198,12 @@ const ContactManager = ({
         })()}
         placeholder="Filter by Status"
         label="Select Status(es)"
-        onChange={(values) => {
+        variant={'transparent'}
+        onChange={(vals) => {
           setStatusFilterOptions({
-            includeActive: values.includes('active'),
-            includeInactive: values.includes('inactive'),
-            includeEmpty: values.includes('empty'),
+            includeActive: vals.includes('active'),
+            includeInactive: vals.includes('inactive'),
+            includeEmpty: vals.includes('empty'),
           });
         }}
         options={[
@@ -290,7 +284,6 @@ const ContactManager = ({
                     >
                       Delete
                     </Button>
-
                     <CrmActionButton
                       actionType="RECORD_APP_LINK"
                       actionContext={{
@@ -309,6 +302,17 @@ const ContactManager = ({
           </TableBody>
         </Table>
       )}
+
+      <Flex align={'center'} justify={'center'}>
+        <Button
+          onClick={async () => {
+            await handleCreateContact();
+          }}
+          variant="primary"
+        >
+          Create New Contact
+        </Button>
+      </Flex>
     </>
   );
 };
