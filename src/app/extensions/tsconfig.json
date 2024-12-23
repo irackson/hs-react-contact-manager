@@ -3,6 +3,8 @@
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"jsx": "react-jsx",
+		"moduleResolution": "bundler",
+		"module": "ESNext"
 	},
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"display": "Recommended",

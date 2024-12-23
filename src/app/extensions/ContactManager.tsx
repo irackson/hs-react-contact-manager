@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
-  Input,
-  Modal,
   Table,
   TableHead,
   TableRow,
@@ -10,12 +8,12 @@ import {
   TableBody,
   TableCell,
   EmptyState,
-  Select,
   MultiSelect,
   LoadingSpinner,
   Text,
   hubspot,
 } from '@hubspot/ui-extensions';
+import { CrmPropertyList } from '@hubspot/ui-extensions/crm';
 import {
   type FetchContactsParameters,
   type FetchContactsResponse,
@@ -41,14 +39,7 @@ const ContactManager = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [pageInfo, setPageInfo] = useState(initialPageInfo);
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [currentContact, setCurrentContact] = useState<{
-    id?: string;
-    email: string;
-    firstname: string;
-    lastname: string;
-    status: string;
-  } | null>(null);
+
   const [statusFilterOptions, setStatusFilterOptions] = useState<
     FetchContactsParameters['statusFilterOptions']
   >({
@@ -111,22 +102,6 @@ const ContactManager = () => {
     fetchContacts(true);
   }, [statusFilterOptions]);
 
-  const handleSaveContact = async () => {
-    if (!currentContact) return;
-    try {
-      await hubspot.serverless(
-        currentContact.id ? 'updateContact' : 'addContact',
-        {
-          parameters: currentContact,
-        }
-      );
-      setShowModal(false);
-      fetchContacts();
-    } catch (err) {
-      setError('Failed to save contact');
-    }
-  };
-
   const handleDeleteContact = async (id: string) => {
     try {
       await hubspot.serverless('deleteContact', { parameters: { id } });
@@ -143,13 +118,26 @@ const ContactManager = () => {
     <>
       <Button
         onClick={() => {
-          setCurrentContact(null);
-          setShowModal(true);
+          // todo
         }}
       >
-        {`Add Contact`}
+        {`Create New Contact`}
       </Button>
 
+      <CrmPropertyList
+        /* only render if editing a contact */
+        properties={[
+          'email',
+          'firstname',
+          'lastname',
+          'hs_content_membership_status',
+        ]}
+        direction="row"
+        objectTypeId="0-1"
+        objectId={
+          1234 /* if editing from the table, use id of selected contact in table. if used after creating new contact, use id returned by create function. only provide this parameter if the edit contact button has just been clicked or create new has just been clicked. by omitting this parameter, the contact from the url will be used (i.e. if the ui extension is rendering from https://app.hubspot.com/contacts/48631558/record/0-1/86494764070, then 86494764070 will be assumed automatically, which is fine) */
+        }
+      />
       <MultiSelect
         value={(() => {
           const selectedValues: string[] = [];
@@ -176,7 +164,6 @@ const ContactManager = () => {
           { label: 'Empty', value: 'empty' },
         ]}
       />
-
       {pageInfo.contacts.length === 0 ||
       (!statusFilterOptions.includeActive &&
         !statusFilterOptions.includeEmpty &&
@@ -221,16 +208,7 @@ const ContactManager = () => {
                 <TableCell>
                   <Button
                     onClick={() => {
-                      setCurrentContact({
-                        id: contact._metadata.id,
-                        email: contact.email || '',
-                        firstname: contact.firstname || '',
-                        lastname: contact.lastname || '',
-                        status:
-                          contact.hs_content_membership_status?.value ||
-                          'Inactive',
-                      });
-                      setShowModal(true);
+                      // todo
                     }}
                   >
                     Edit
@@ -245,51 +223,6 @@ const ContactManager = () => {
             ))}
           </TableBody>
         </Table>
-      )}
-      {showModal && (
-        <Modal
-          id="contact-modal"
-          title={currentContact ? 'Edit Contact' : 'Add Contact'}
-          onClose={() => setShowModal(false)}
-        >
-          <Input
-            label="First Name"
-            name="firstname"
-            value={currentContact?.firstname || ''}
-            onChange={(value) =>
-              setCurrentContact({ ...currentContact, firstname: value })
-            }
-          />
-          <Input
-            label="Last Name"
-            name="lastname"
-            value={currentContact?.lastname || ''}
-            onChange={(value) =>
-              setCurrentContact({ ...currentContact, lastname: value })
-            }
-          />
-          <Input
-            label="Email"
-            name="email"
-            value={currentContact?.email || ''}
-            onChange={(value) =>
-              setCurrentContact({ ...currentContact, email: value })
-            }
-          />
-          <Select
-            label="Status"
-            name="status"
-            options={[
-              { label: 'Active', value: 'Active' },
-              { label: 'Inactive', value: 'Inactive' },
-            ]}
-            value={currentContact?.status || 'Active'}
-            onChange={(value) =>
-              setCurrentContact({ ...currentContact, status: value as string })
-            }
-          />
-          <Button onClick={handleSaveContact}>Save</Button>
-        </Modal>
       )}
     </>
   );
