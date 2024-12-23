@@ -156,14 +156,14 @@ export const main = async ({
 
   const { query, SuccessSchema } = createQueryAndSuccessSchema(
     {
-      email: z.string().email().optional(),
-      firstname: z.string().optional(),
-      lastname: z.string().optional(),
-      lastmodifieddate: z.number().optional(),
+      email: z.string().nullable().optional(),
+      firstname: z.string().nullable().optional(),
+      lastname: z.string().nullable().optional(),
+      lastmodifieddate: z.number().nullable().optional(),
       hs_content_membership_status: z
         .object({
-          label: z.string().optional(),
-          value: z.string().optional(),
+          label: z.string(),
+          value: z.string(),
         })
         .nullable()
         .optional(),

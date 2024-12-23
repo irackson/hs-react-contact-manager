@@ -1,48 +1,39 @@
-export const main = async (context: any = {}) => {
-  // We expect JSON body like: { email, name, status }
-  const body = JSON.parse(context.body || '{}');
-  const { email, name, status } = body;
+import axios from 'axios';
+import { z } from 'zod';
 
-  const mutation = `
-    mutation createAContact($properties: [ContactInputPropertyInput!]!) {
-      createContact(properties: $properties) {
-        id
-        properties {
-          name
-          value
-        }
-      }
-    }
-  `;
+const CreateContactSuccessSchema = z.object({
+  id: z.string(),
+  properties: z.record(z.unknown()),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  archived: z.boolean(),
+});
 
-  const variables = {
-    properties: [
-      { name: 'email', value: email },
-      { name: 'firstname', value: name },
-      // Using hs_content_membership_status for "status"
-      { name: 'hs_content_membership_status', value: status || 'ACTIVE' },
-    ],
-  };
-
-  try {
-    const response = await fetch('https://api.hubapi.com/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.PRIVATE_APP_ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify({ query: mutation, variables }),
-    });
-
-    const json = await response.json();
-    return {
-      statusCode: 200,
-      body: JSON.stringify(json.data),
-    };
-  } catch (error: any) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
-    };
+export const main = async () => {
+  const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
+  if (!token) {
+    throw new Error('Missing PRIVATE_APP_ACCESS_TOKEN');
   }
+
+  const response = await axios.post(
+    'https://api.hubapi.com/crm/v3/objects/contacts',
+    { properties: {} },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  const parsedResponse = CreateContactSuccessSchema.safeParse(response.data);
+  if (!parsedResponse.success) {
+    console.error('Unexpected createContact response:', response.data);
+    console.error('Zod error:', parsedResponse.error);
+    throw new Error('Failed to create contact (invalid response)');
+  }
+
+  return { id: parsedResponse.data.id };
 };
+
+export type CreateContactResponse = Awaited<ReturnType<typeof main>>;

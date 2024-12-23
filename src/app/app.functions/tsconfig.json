@@ -1,5 +1,4 @@
 {
-	// A schema reference for editor IntelliSense (optional)
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"compilerOptions": {
 		"target": "ES2020",

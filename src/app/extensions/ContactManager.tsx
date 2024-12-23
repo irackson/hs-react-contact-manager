@@ -48,6 +48,8 @@ const ContactManager = () => {
     includeEmpty: true,
   });
 
+  const [focusedContactId, setFocusedContactId] = useState<string | null>(null);
+
   const fetchContacts = async (withPagingReset = false) => {
     setLoading(true);
     setError(null);
@@ -111,21 +113,23 @@ const ContactManager = () => {
     }
   };
 
+  const handleCreateContact = async () => {
+    try {
+      const { id } = await hubspot.serverless('createContact');
+      setFocusedContactId(id);
+    } catch (err) {
+      setError('Failed to create new contact');
+    }
+  };
+
   if (loading) return <LoadingSpinner label="Loading contacts..." />;
   if (error) return <Text>{error}</Text>;
 
   return (
     <>
-      <Button
-        onClick={() => {
-          // todo
-        }}
-      >
-        {`Create New Contact`}
-      </Button>
+      <Button onClick={handleCreateContact}>{`Create New Contact`}</Button>
 
       <CrmPropertyList
-        /* only render if editing a contact */
         properties={[
           'email',
           'firstname',
@@ -134,10 +138,9 @@ const ContactManager = () => {
         ]}
         direction="row"
         objectTypeId="0-1"
-        objectId={
-          1234 /* if editing from the table, use id of selected contact in table. if used after creating new contact, use id returned by create function. only provide this parameter if the edit contact button has just been clicked or create new has just been clicked. by omitting this parameter, the contact from the url will be used (i.e. if the ui extension is rendering from https://app.hubspot.com/contacts/48631558/record/0-1/86494764070, then 86494764070 will be assumed automatically, which is fine) */
-        }
+        objectId={Number(focusedContactId) ?? undefined}
       />
+
       <MultiSelect
         value={(() => {
           const selectedValues: string[] = [];
@@ -150,7 +153,6 @@ const ContactManager = () => {
         placeholder="Filter by Status"
         label="Select Status(es)"
         name="statusFilter"
-        required={false}
         onChange={async (value) => {
           setStatusFilterOptions({
             includeActive: value.includes('active'),
@@ -164,6 +166,7 @@ const ContactManager = () => {
           { label: 'Empty', value: 'empty' },
         ]}
       />
+
       {pageInfo.contacts.length === 0 ||
       (!statusFilterOptions.includeActive &&
         !statusFilterOptions.includeEmpty &&
@@ -198,29 +201,41 @@ const ContactManager = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {pageInfo.contacts.map((contact) => (
-              <TableRow key={contact._metadata.id}>
-                <TableCell>{`${contact.firstname} ${contact.lastname}`}</TableCell>
-                <TableCell>{contact.email}</TableCell>
-                <TableCell>
-                  {contact.hs_content_membership_status?.label || '--'}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    onClick={() => {
-                      // todo
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    onClick={() => handleDeleteContact(contact._metadata.id)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {pageInfo.contacts.map(
+              ({
+                firstname,
+                lastname,
+                email,
+                hs_content_membership_status,
+                _metadata: { id },
+              }) => (
+                <TableRow key={id}>
+                  <TableCell>
+                    {`${
+                      firstname?.length > 0 || lastname?.length > 0
+                        ? `${firstname} ${lastname}`
+                        : '--'
+                    }`}
+                  </TableCell>
+                  <TableCell>{email?.length > 0 ? email : '--'}</TableCell>
+                  <TableCell>
+                    {hs_content_membership_status?.label || '--'}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      onClick={() => {
+                        setFocusedContactId(id);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button onClick={() => handleDeleteContact(id)}>
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              )
+            )}
           </TableBody>
         </Table>
       )}

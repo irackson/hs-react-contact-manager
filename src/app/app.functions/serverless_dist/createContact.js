@@ -1,49 +1,35 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.main = void 0;
-const main = async (context = {}) => {
-    // We expect JSON body like: { email, name, status }
-    const body = JSON.parse(context.body || '{}');
-    const { email, name, status } = body;
-    const mutation = `
-    mutation createAContact($properties: [ContactInputPropertyInput!]!) {
-      createContact(properties: $properties) {
-        id
-        properties {
-          name
-          value
-        }
-      }
+const axios_1 = __importDefault(require("axios"));
+const zod_1 = require("zod");
+const CreateContactSuccessSchema = zod_1.z.object({
+    id: zod_1.z.string(),
+    properties: zod_1.z.record(zod_1.z.unknown()),
+    createdAt: zod_1.z.string(),
+    updatedAt: zod_1.z.string(),
+    archived: zod_1.z.boolean(),
+});
+const main = async () => {
+    const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
+    if (!token) {
+        throw new Error('Missing PRIVATE_APP_ACCESS_TOKEN');
     }
-  `;
-    const variables = {
-        properties: [
-            { name: 'email', value: email },
-            { name: 'firstname', value: name },
-            // Using hs_content_membership_status for "status"
-            { name: 'hs_content_membership_status', value: status || 'ACTIVE' },
-        ],
-    };
-    try {
-        const response = await fetch('https://api.hubapi.com/graphql', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${process.env.PRIVATE_APP_ACCESS_TOKEN}`,
-            },
-            body: JSON.stringify({ query: mutation, variables }),
-        });
-        const json = await response.json();
-        return {
-            statusCode: 200,
-            body: JSON.stringify(json.data),
-        };
+    const response = await axios_1.default.post('https://api.hubapi.com/crm/v3/objects/contacts', { properties: {} }, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+    });
+    const parsedResponse = CreateContactSuccessSchema.safeParse(response.data);
+    if (!parsedResponse.success) {
+        console.error('Unexpected createContact response:', response.data);
+        console.error('Zod error:', parsedResponse.error);
+        throw new Error('Failed to create contact (invalid response)');
     }
-    catch (error) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: error.message }),
-        };
-    }
+    return { id: parsedResponse.data.id };
 };
 exports.main = main;

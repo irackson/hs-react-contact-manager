@@ -114,14 +114,14 @@ const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit },
         return ` { hs_content_membership_status__in: ${JSON.stringify(statusFilterInArray)} }`;
     })();
     const { query, SuccessSchema } = (0, exports.createQueryAndSuccessSchema)({
-        email: zod_1.z.string().email().optional(),
-        firstname: zod_1.z.string().optional(),
-        lastname: zod_1.z.string().optional(),
-        lastmodifieddate: zod_1.z.number().optional(),
+        email: zod_1.z.string().nullable().optional(),
+        firstname: zod_1.z.string().nullable().optional(),
+        lastname: zod_1.z.string().nullable().optional(),
+        lastmodifieddate: zod_1.z.number().nullable().optional(),
         hs_content_membership_status: zod_1.z
             .object({
-            label: zod_1.z.string().optional(),
-            value: zod_1.z.string().optional(),
+            label: zod_1.z.string(),
+            value: zod_1.z.string(),
         })
             .nullable()
             .optional(),
