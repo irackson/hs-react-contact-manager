@@ -19,7 +19,9 @@ import {
   type FetchContactsResponse,
 } from '../app.functions/serverless_src/fetchContacts';
 
-hubspot.extend(({ actions }) => <ContactManager addAlert={actions.addAlert} />);
+hubspot.extend(({ actions }) => (
+  <ContactManager addAlert={actions['addAlert']} />
+));
 
 const initialPageInfo: FetchContactsParameters['pageInfo'] & {
   hasMore: boolean | null;
@@ -37,7 +39,11 @@ const initialPageInfo: FetchContactsParameters['pageInfo'] & {
 const ContactManager = ({
   addAlert,
 }: {
-  addAlert: (args: { type: 'success'; message: string }) => void;
+  addAlert: (args: {
+    title: string;
+    message: string;
+    type: 'info' | 'tip' | 'success' | 'warning' | 'danger';
+  }) => void;
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,10 +116,6 @@ const ContactManager = ({
     fetchContacts(true);
   }, [statusFilterOptions, fetchContacts]);
 
-  /**
-   * Handle Delete Contact
-   * Calls the deleteContact serverless function, refetches, and displays an alert.
-   */
   const handleDeleteContact = async ({
     id,
     email,
@@ -126,7 +128,8 @@ const ContactManager = ({
         parameters: { id },
       })
       .then(async () => {
-        addAlert?.({
+        addAlert({
+          title: 'Contact Deleted',
           type: 'success',
           message: `The delete of Contact ${
             email?.length ? email : id
@@ -135,6 +138,13 @@ const ContactManager = ({
         await fetchContacts();
       })
       .catch((err) => {
+        addAlert({
+          title: 'Contact Delete Failed',
+          type: 'danger',
+          message: `Something went wrong when deleting ${
+            email?.length ? email : id
+          }`,
+        });
         setError('Failed to delete contact');
       });
 

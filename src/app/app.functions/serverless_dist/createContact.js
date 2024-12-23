@@ -16,7 +16,7 @@ const CreateContactSuccessSchema = zod_1.z.object({
 const main = async () => {
     const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
     if (!token) {
-        throw new Error('Missing PRIVATE_APP_ACCESS_TOKEN');
+        throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
     }
     const response = await axios_1.default.post('https://api.hubapi.com/crm/v3/objects/contacts', { properties: {} }, {
         headers: {
@@ -28,7 +28,7 @@ const main = async () => {
     if (!parsedResponse.success) {
         console.error('Unexpected createContact response:', response.data);
         console.error('Zod error:', parsedResponse.error);
-        throw new Error('Failed to create contact (invalid response)');
+        throw Error('Failed to create contact (invalid response)');
     }
     return { id: parsedResponse.data.id };
 };

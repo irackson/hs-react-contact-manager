@@ -27,7 +27,7 @@ const createQueryAndSuccessSchema = (desiredPropertiesSchema, filterString) => {
     }
   `.loc?.source?.body;
     if (!query)
-        throw new Error('Failed to generate GraphQL query string');
+        throw Error('Failed to generate GraphQL query string');
     const SuccessSchema = zod_1.z.object({
         data: zod_1.z.object({
             CRM: zod_1.z.object({
@@ -142,13 +142,13 @@ const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit },
     })
         .catch((err) => {
         console.error('Error:', err);
-        throw new Error(`Failed to fetch contacts: ${err.message}`);
+        throw Error(`Failed to fetch contacts: ${err.message}`);
     });
     const parsedResponse = SuccessSchema.safeParse(response.data);
     if (!parsedResponse.success) {
         console.error(`Unexpected response: ${JSON.stringify(response.data)}`);
         console.log('Zod Error:', parsedResponse.error);
-        throw new Error('Failed to fetch contacts');
+        throw Error('Failed to fetch contacts');
     }
     const { items, hasMore, offset, total } = parsedResponse.data.data.CRM.contact_collection;
     return {
