@@ -11,6 +11,7 @@ import {
   TableCell,
   EmptyState,
   Select,
+  MultiSelect,
   LoadingSpinner,
   Text,
   hubspot,
@@ -22,25 +23,24 @@ import {
 
 hubspot.extend(() => <ContactManager />);
 
+const initialPageInfo: FetchContactsParameters['pageInfo'] & {
+  hasMore: boolean | null;
+  total: number | null;
+  currentPage: number;
+  contacts: FetchContactsResponse['contacts'];
+} = {
+  hasMore: null,
+  total: null,
+  offset: 0,
+  limit: 25,
+  currentPage: 1,
+  contacts: [],
+};
 const ContactManager = () => {
-  const [contacts, setContacts] = useState<FetchContactsResponse['contacts']>(
-    []
-  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [pageInfo, setPageInfo] = useState<
-    FetchContactsParameters['pageInfo'] & {
-      hasMore: boolean | null;
-      total: number | null;
-      currentPage: number;
-    }
-  >({
-    hasMore: null,
-    total: null,
-    offset: 0,
-    limit: 25,
-    currentPage: 1,
-  });
+
+  const [pageInfo, setPageInfo] = useState(initialPageInfo);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [currentContact, setCurrentContact] = useState<{
     id?: string;
@@ -49,9 +49,15 @@ const ContactManager = () => {
     lastname: string;
     status: string;
   } | null>(null);
-  const [filter, setFilter] = useState<FetchContactsParameters['filter']>(null);
+  const [statusFilterOptions, setStatusFilterOptions] = useState<
+    FetchContactsParameters['statusFilterOptions']
+  >({
+    includeActive: true,
+    includeInactive: true,
+    includeEmpty: true,
+  });
 
-  const fetchContacts = async () => {
+  const fetchContacts = async (withPagingReset = false) => {
     setLoading(true);
     setError(null);
     try {
@@ -63,10 +69,10 @@ const ContactManager = () => {
       } = (await hubspot.serverless('fetchContacts', {
         parameters: {
           pageInfo: {
-            offset: pageInfo.offset,
+            offset: withPagingReset ? 0 : pageInfo.offset,
             limit: pageInfo.limit,
           },
-          filter,
+          statusFilterOptions,
           orderBy: [
             {
               propertyName: 'email',
@@ -80,13 +86,13 @@ const ContactManager = () => {
         } satisfies FetchContactsParameters,
       })) as FetchContactsResponse;
 
-      setContacts(fetchedContacts);
       setPageInfo(({ limit, currentPage }) => ({
-        currentPage,
+        currentPage: withPagingReset ? 1 : currentPage,
         limit,
         hasMore: fetchedHasMore,
         offset: fetchedOffset,
         total: fetchedTotal,
+        contacts: fetchedContacts,
       }));
     } catch (err) {
       setError('Failed to fetch contacts');
@@ -96,8 +102,14 @@ const ContactManager = () => {
   };
 
   useEffect(() => {
-    fetchContacts();
-  }, []);
+    if (
+      !statusFilterOptions.includeActive &&
+      !statusFilterOptions.includeInactive &&
+      !statusFilterOptions.includeEmpty
+    )
+      return;
+    fetchContacts(true);
+  }, [statusFilterOptions]);
 
   const handleSaveContact = async () => {
     if (!currentContact) return;
@@ -135,29 +147,40 @@ const ContactManager = () => {
           setShowModal(true);
         }}
       >
-        Add Contact
+        {`Add Contact (total ${pageInfo.total})`}
       </Button>
-      <Select
+
+      <MultiSelect
+        value={(() => {
+          const selectedValues: string[] = [];
+          if (statusFilterOptions.includeActive) selectedValues.push('active');
+          if (statusFilterOptions.includeInactive)
+            selectedValues.push('inactive');
+          if (statusFilterOptions.includeEmpty) selectedValues.push('empty');
+          return selectedValues;
+        })()}
+        placeholder="Filter by Status"
+        label="Select Status(es)"
+        name="statusFilter"
+        required={false}
+        onChange={async (value) => {
+          setStatusFilterOptions({
+            includeActive: value.includes('active'),
+            includeInactive: value.includes('inactive'),
+            includeEmpty: value.includes('empty'),
+          });
+        }}
         options={[
-          { label: 'All', value: 'all' },
           { label: 'Active', value: 'active' },
           { label: 'Inactive', value: 'inactive' },
+          { label: 'Empty', value: 'empty' },
         ]}
-        value={filter?.value ? filter.value : 'all'}
-        onChange={(value) => {
-          setFilter(
-            value === 'all'
-              ? null
-              : {
-                  propertyName: 'hs_content_membership_status',
-                  value: String(value),
-                }
-          );
-          fetchContacts();
-        }}
       />
 
-      {contacts.length === 0 ? (
+      {pageInfo.contacts.length === 0 ||
+      (!statusFilterOptions.includeActive &&
+        !statusFilterOptions.includeEmpty &&
+        !statusFilterOptions.includeInactive) ? (
         <EmptyState title="No Contacts Found" flush={false}>
           <Text>Try adding a new contact or adjusting your filters.</Text>
         </EmptyState>
@@ -188,7 +211,7 @@ const ContactManager = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {contacts.map((contact) => (
+            {pageInfo.contacts.map((contact) => (
               <TableRow key={contact._metadata.id}>
                 <TableCell>{`${contact.firstname} ${contact.lastname}`}</TableCell>
                 <TableCell>{contact.email}</TableCell>

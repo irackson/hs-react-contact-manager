@@ -7,12 +7,12 @@ exports.main = exports.createQueryAndSuccessSchema = void 0;
 const axios_1 = __importDefault(require("axios"));
 const zod_1 = require("zod");
 const graphql_tag_1 = __importDefault(require("graphql-tag"));
-const createQueryAndSuccessSchema = (desiredPropertiesSchema) => {
+const createQueryAndSuccessSchema = (desiredPropertiesSchema, filterString) => {
     const fields = Object.keys(desiredPropertiesSchema).join('\n            ');
     const query = (0, graphql_tag_1.default) `
     query GetContacts($limit: Int, $offset: Int, $orderBy: [crm_contact_order_by!]) {
       CRM {
-        contact_collection(limit: $limit, offset: $offset, orderBy: $orderBy) {
+        contact_collection(limit: $limit, offset: $offset, orderBy: $orderBy, filter: ${filterString}) {
           items {
             ${fields}
             _metadata {
@@ -83,10 +83,26 @@ const createQueryAndSuccessSchema = (desiredPropertiesSchema) => {
     return { query, SuccessSchema };
 };
 exports.createQueryAndSuccessSchema = createQueryAndSuccessSchema;
-const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit }, orderBy, filter, }, }) => {
+const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit }, orderBy, statusFilterOptions, }, }) => {
     const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
     if (typeof token !== 'string' || token.trim().length === 0)
         throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
+    const filterString = (() => {
+        if (statusFilterOptions.includeActive &&
+            statusFilterOptions.includeInactive &&
+            statusFilterOptions.includeEmpty)
+            return '{}';
+        if (!statusFilterOptions.includeActive &&
+            !statusFilterOptions.includeInactive &&
+            statusFilterOptions.includeEmpty)
+            return `{ hs_content_membership_status__null: true }`;
+        const statusFilterInArray = [];
+        if (statusFilterOptions.includeActive)
+            statusFilterInArray.push('active');
+        if (statusFilterOptions.includeInactive)
+            statusFilterInArray.push('inactive');
+        return ` { hs_content_membership_status__in: ${JSON.stringify(statusFilterInArray)} }`;
+    })();
     const { query, SuccessSchema } = (0, exports.createQueryAndSuccessSchema)({
         email: zod_1.z.string().email().optional(),
         firstname: zod_1.z.string().optional(),
@@ -99,22 +115,7 @@ const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit },
         })
             .nullable()
             .optional(),
-    });
-    const filters = filter
-        ? {
-            filterGroups: [
-                {
-                    filters: [
-                        {
-                            propertyName: filter.propertyName,
-                            operator: 'EQ',
-                            value: filter.value,
-                        },
-                    ],
-                },
-            ],
-        }
-        : {};
+    }, filterString);
     const response = await axios_1.default
         .post('https://api.hubapi.com/collector/graphql', {
         query,
@@ -122,7 +123,6 @@ const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit },
             limit,
             offset: incomingOffset,
             orderBy: orderBy.map(({ propertyName, ascending }) => `${propertyName}__${ascending ? 'asc' : 'desc'}`),
-            ...filters,
         },
     }, {
         headers: {

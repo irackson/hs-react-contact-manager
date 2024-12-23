@@ -5,14 +5,15 @@ import gql from 'graphql-tag';
 export const createQueryAndSuccessSchema = <
   T extends { [key: string]: z.ZodTypeAny }
 >(
-  desiredPropertiesSchema: T
+  desiredPropertiesSchema: T,
+  filterString: string
 ) => {
   const fields = Object.keys(desiredPropertiesSchema).join('\n            ');
 
   const query = gql`
     query GetContacts($limit: Int, $offset: Int, $orderBy: [crm_contact_order_by!]) {
       CRM {
-        contact_collection(limit: $limit, offset: $offset, orderBy: $orderBy) {
+        contact_collection(limit: $limit, offset: $offset, orderBy: $orderBy, filter: ${filterString}) {
           items {
             ${fields}
             _metadata {
@@ -92,7 +93,7 @@ export const main = async ({
   parameters: {
     pageInfo: { offset: incomingOffset, limit },
     orderBy,
-    filter,
+    statusFilterOptions,
   },
 }: {
   parameters: {
@@ -101,42 +102,58 @@ export const main = async ({
       limit: number;
     };
     orderBy: Array<{ propertyName: string; ascending: boolean }>;
-    filter: { propertyName: string; value: string } | null;
+    statusFilterOptions: {
+      includeActive: boolean;
+      includeInactive: boolean;
+      includeEmpty: boolean;
+    };
   };
 }) => {
   const token = process.env['PRIVATE_APP_ACCESS_TOKEN'];
   if (typeof token !== 'string' || token.trim().length === 0)
     throw Error('Missing PRIVATE_APP_ACCESS_TOKEN');
 
-  const { query, SuccessSchema } = createQueryAndSuccessSchema({
-    email: z.string().email().optional(),
-    firstname: z.string().optional(),
-    lastname: z.string().optional(),
-    lastmodifieddate: z.number().optional(),
-    hs_content_membership_status: z
-      .object({
-        label: z.string().optional(),
-        value: z.string().optional(),
-      })
-      .nullable()
-      .optional(),
-  });
+  const filterString = (() => {
+    if (
+      statusFilterOptions.includeActive &&
+      statusFilterOptions.includeInactive &&
+      statusFilterOptions.includeEmpty
+    )
+      return '{}';
 
-  const filters = filter
-    ? {
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: filter.propertyName,
-                operator: 'EQ',
-                value: filter.value,
-              },
-            ],
-          },
-        ],
-      }
-    : {};
+    if (
+      !statusFilterOptions.includeActive &&
+      !statusFilterOptions.includeInactive &&
+      statusFilterOptions.includeEmpty
+    )
+      return `{ hs_content_membership_status__null: true }`;
+
+    const statusFilterInArray: string[] = [];
+    if (statusFilterOptions.includeActive) statusFilterInArray.push('active');
+    if (statusFilterOptions.includeInactive)
+      statusFilterInArray.push('inactive');
+
+    return ` { hs_content_membership_status__in: ${JSON.stringify(
+      statusFilterInArray
+    )} }`;
+  })();
+
+  const { query, SuccessSchema } = createQueryAndSuccessSchema(
+    {
+      email: z.string().email().optional(),
+      firstname: z.string().optional(),
+      lastname: z.string().optional(),
+      lastmodifieddate: z.number().optional(),
+      hs_content_membership_status: z
+        .object({
+          label: z.string().optional(),
+          value: z.string().optional(),
+        })
+        .nullable()
+        .optional(),
+    },
+    filterString
+  );
 
   const response = await axios
     .post(
@@ -150,7 +167,6 @@ export const main = async ({
             ({ propertyName, ascending }) =>
               `${propertyName}__${ascending ? 'asc' : 'desc'}`
           ),
-          ...filters,
         },
       },
       {
