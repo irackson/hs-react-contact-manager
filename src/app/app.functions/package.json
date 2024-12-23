@@ -2,7 +2,7 @@
   "author": "Ian Rackson",
   "dependencies": {
     "@hubspot/api-client": "^7.0.1",
-    "axios": "^0.27.2",
+    "axios": "^0.28.0",
     "debug": "^4.4.0",
     "zod": "^3.24.1"
   },
