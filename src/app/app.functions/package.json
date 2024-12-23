@@ -7,14 +7,19 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "dotenv-webpack": "^8.1.0",
     "graphql-tag": "^2.12.6",
-    "typescript": "^5.7.2"
+    "terser-webpack-plugin": "^5.3.11",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.7.2",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
   },
   "license": "MIT",
   "name": "contact-manager-app",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w"
+    "build": "webpack --mode production",
+    "watch": "webpack --mode production --watch"
   },
   "version": "0.1.0"
 }

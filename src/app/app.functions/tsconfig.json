@@ -1,19 +1,13 @@
 {
-	"$schema": "https://json.schemastore.org/tsconfig",
 	"compilerOptions": {
 		"target": "ES2020",
-		"module": "CommonJS",
+		"module": "ESNext",
 		"moduleResolution": "node",
-		"outDir": "serverless_dist",
-		"noEmit": false,
+		"outDir": "./serverless_dist",
 		"strict": true,
 		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
 		"skipLibCheck": true,
-		"forceConsistentCasingInFileNames": true,
-		"types": [
-			"node"
-		]
+		"forceConsistentCasingInFileNames": true
 	},
 	"include": [
 		"serverless_src/**/*.ts"

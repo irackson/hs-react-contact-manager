@@ -97,4 +97,5 @@ Build a simple Contact Manager application in Hubspot with the following feature
 
 ## TODOs / Improvements
 
-- Make use of [onCrmPropertiesUpdate](https://developers.hubspot.com/docs/guides/crm/ui-extensions/sample-extensions/overview#contact-duplicator)
+- Make use of [error component](https://developers.hubspot.com/docs/reference/ui-components/standard-components/error-state#errorstate-%7C-ui-components-beta)
+- Make sure backend serverless functions are protected with [secrets](https://developers.hubspot.com/docs/guides/cms/content/data-driven-content/serverless-functions/overview#secrets)
