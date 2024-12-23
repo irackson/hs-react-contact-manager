@@ -128,6 +128,22 @@ export const main = async ({
     )
       return `{ hs_content_membership_status__null: true }`;
 
+    if (
+      statusFilterOptions.includeActive &&
+      !statusFilterOptions.includeInactive &&
+      statusFilterOptions.includeEmpty
+    ) {
+      return `{ hs_content_membership_status__neq: "inactive" }`;
+    }
+
+    if (
+      !statusFilterOptions.includeActive &&
+      statusFilterOptions.includeInactive &&
+      statusFilterOptions.includeEmpty
+    ) {
+      return `{ hs_content_membership_status__neq: "active" }`;
+    }
+
     const statusFilterInArray: string[] = [];
     if (statusFilterOptions.includeActive) statusFilterInArray.push('active');
     if (statusFilterOptions.includeInactive)

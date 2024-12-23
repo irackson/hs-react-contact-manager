@@ -147,7 +147,7 @@ const ContactManager = () => {
           setShowModal(true);
         }}
       >
-        {`Add Contact (total ${pageInfo.total})`}
+        {`Add Contact`}
       </Button>
 
       <MultiSelect

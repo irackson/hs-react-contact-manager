@@ -96,6 +96,16 @@ const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit },
             !statusFilterOptions.includeInactive &&
             statusFilterOptions.includeEmpty)
             return `{ hs_content_membership_status__null: true }`;
+        if (statusFilterOptions.includeActive &&
+            !statusFilterOptions.includeInactive &&
+            statusFilterOptions.includeEmpty) {
+            return `{ hs_content_membership_status__neq: "inactive" }`;
+        }
+        if (!statusFilterOptions.includeActive &&
+            statusFilterOptions.includeInactive &&
+            statusFilterOptions.includeEmpty) {
+            return `{ hs_content_membership_status__neq: "active" }`;
+        }
         const statusFilterInArray = [];
         if (statusFilterOptions.includeActive)
             statusFilterInArray.push('active');
