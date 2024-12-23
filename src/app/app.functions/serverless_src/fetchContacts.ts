@@ -1,6 +1,17 @@
 import axios from 'axios';
 import { z } from 'zod';
 import gql from 'graphql-tag';
+import { test } from 'node:test';
+import * as assert from 'node:assert';
+
+test('Required ENV Variables are Defined', () => {
+  assert.equal(
+    typeof process.env['PRIVATE_APP_ACCESS_TOKEN'] === 'string' &&
+      process.env['PRIVATE_APP_ACCESS_TOKEN'].trim().length > 0,
+    true,
+    'Missing PRIVATE_APP_ACCESS_TOKEN'
+  );
+});
 
 export const createQueryAndSuccessSchema = <
   T extends { [key: string]: z.ZodTypeAny }
