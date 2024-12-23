@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Button,
   Table,
@@ -122,9 +122,10 @@ const ContactManager = ({
     email: string | undefined;
   }) => {
     try {
-      await hubspot.serverless('deleteContact', {
+      const deleteResponse = await hubspot.serverless('deleteContact', {
         parameters: { id },
       });
+
       addAlert({
         title: 'Contact Deleted',
         type: 'success',
@@ -132,6 +133,9 @@ const ContactManager = ({
           email?.length ? email : id
         } has successfully occurred.`,
       });
+
+      //! wait for the search index to update after delete
+      await new Promise((r) => setTimeout(r, 8_000));
       await fetchContacts(true);
     } catch (err) {
       addAlert({
@@ -167,7 +171,13 @@ const ContactManager = ({
 
   return (
     <>
-      <Button onClick={handleCreateContact}>Create New Contact</Button>
+      <Button
+        onClick={async () => {
+          await handleCreateContact();
+        }}
+      >
+        Create New Contact
+      </Button>
 
       {focusedContactId && (
         <CrmPropertyList
@@ -263,11 +273,19 @@ const ContactManager = ({
                     {hs_content_membership_status?.label || '--'}
                   </TableCell>
                   <TableCell>
-                    <Button onClick={() => setFocusedContactId(id)}>
+                    <Button
+                      onClick={() => {
+                        setFocusedContactId(id);
+                      }}
+                    >
                       Edit
                     </Button>
 
-                    <Button onClick={() => handleDeleteContact({ id, email })}>
+                    <Button
+                      onClick={async () => {
+                        await handleDeleteContact({ id, email });
+                      }}
+                    >
                       Delete
                     </Button>
 

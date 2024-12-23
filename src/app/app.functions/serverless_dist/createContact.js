@@ -7,7 +7,7 @@ exports.main = void 0;
 const axios_1 = __importDefault(require("axios"));
 const zod_1 = require("zod");
 const fetchContacts_1 = require("./fetchContacts");
-async function waitForContactInSearchIndex(contactId, token, maxAttempts = 10) {
+async function waitForContactInSearchIndex(contactId, token, maxAttempts = 15) {
     console.info(`Waiting for contact ${contactId} to appear in search index...`);
     let attempts = 0;
     while (attempts < maxAttempts) {
@@ -17,21 +17,26 @@ async function waitForContactInSearchIndex(contactId, token, maxAttempts = 10) {
             parameters: {
                 pageInfo: {
                     offset: 0,
-                    limit: 1,
+                    limit: 5,
                 },
                 orderBy: [
                     {
-                        propertyName: 'hs_object_id',
+                        propertyName: 'email',
+                        ascending: true,
+                    },
+                    {
+                        propertyName: 'hs_createdate',
                         ascending: true,
                     },
                 ],
             },
         });
-        if (response.contacts.length === 1) {
-            console.log(`Found contact ${contactId} in search index! Last modified at ${response.contacts[0].lastmodifieddate}`);
+        const targetContact = response.contacts.find(({ _metadata }) => _metadata.id === contactId);
+        if (targetContact) {
+            console.log(`Found contact ${contactId} in search index! Last modified at ${targetContact.lastmodifieddate}`);
             return;
         }
-        await new Promise((r) => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 500));
     }
     throw new Error(`Timed out waiting for contact ${contactId} to appear in search index.`);
 }

@@ -6,7 +6,7 @@ import { main as fetchContactsMain } from './fetchContacts';
 async function waitForContactInSearchIndex(
   contactId: string,
   token: string,
-  maxAttempts = 10
+  maxAttempts = 15
 ): Promise<void> {
   console.info(`Waiting for contact ${contactId} to appear in search index...`);
   let attempts = 0;
@@ -21,25 +21,33 @@ async function waitForContactInSearchIndex(
       parameters: {
         pageInfo: {
           offset: 0,
-          limit: 1,
+          limit: 5,
         },
         orderBy: [
           {
-            propertyName: 'hs_object_id',
+            propertyName: 'email',
+            ascending: true,
+          },
+          {
+            propertyName: 'hs_createdate',
             ascending: true,
           },
         ],
       },
     });
 
-    if (response.contacts.length === 1) {
+    const targetContact = response.contacts.find(
+      ({ _metadata }) => _metadata.id === contactId
+    );
+
+    if (targetContact) {
       console.log(
-        `Found contact ${contactId} in search index! Last modified at ${response.contacts[0].lastmodifieddate}`
+        `Found contact ${contactId} in search index! Last modified at ${targetContact.lastmodifieddate}`
       );
       return;
     }
 
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 500));
   }
 
   throw new Error(

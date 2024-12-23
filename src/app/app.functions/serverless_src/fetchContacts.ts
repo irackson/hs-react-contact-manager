@@ -213,6 +213,8 @@ export const main = async ({
   const { items, hasMore, offset, total } =
     parsedResponse.data.data.CRM.contact_collection;
 
+  console.table(items);
+
   return {
     contacts: items,
     hasMore,

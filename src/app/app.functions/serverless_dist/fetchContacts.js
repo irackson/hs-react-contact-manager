@@ -159,6 +159,7 @@ const main = async ({ parameters: { pageInfo: { offset: incomingOffset, limit },
         throw Error('Failed to fetch contacts');
     }
     const { items, hasMore, offset, total } = parsedResponse.data.data.CRM.contact_collection;
+    console.table(items);
     return {
         contacts: items,
         hasMore,
