@@ -1,5 +1,4 @@
 const path = require('path');
-const Dotenv = require('dotenv-webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
@@ -27,11 +26,6 @@ module.exports = {
     path: path.resolve(__dirname, 'serverless_dist'),
     libraryTarget: 'commonjs2',
   },
-  plugins: [
-    new Dotenv({
-      path: path.resolve(__dirname, '.env'),
-    }),
-  ],
   optimization: {
     minimize: true,
     minimizer: [

@@ -2,15 +2,21 @@
   "appFunctions": {
     "createContact": {
       "file": "serverless_dist/createContact.js",
-      "secrets": []
+      "secrets": [
+        "PRIVATE_APP_ACCESS_TOKEN"
+      ]
     },
     "deleteContact": {
       "file": "serverless_dist/deleteContact.js",
-      "secrets": []
+      "secrets": [
+        "PRIVATE_APP_ACCESS_TOKEN"
+      ]
     },
     "fetchContacts": {
       "file": "serverless_dist/fetchContacts.js",
-      "secrets": []
+      "secrets": [
+        "PRIVATE_APP_ACCESS_TOKEN"
+      ]
     }
   }
 }

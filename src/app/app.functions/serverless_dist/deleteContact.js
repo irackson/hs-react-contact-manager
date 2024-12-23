@@ -4,17 +4,17 @@
 /******/var t={
 /******/ // getDefaultExport function for compatibility with non-harmony modules
 /******/n:e=>{
-/******/var o=e&&e.__esModule?
+/******/var r=e&&e.__esModule?
 /******/()=>e.default
 /******/:()=>e
 /******/;
-/******/return t.d(o,{a:o}),o;
+/******/return t.d(r,{a:r}),r;
 /******/},
 /******/ // define getter functions for harmony exports
-/******/d:(e,o)=>{
-/******/for(var r in o)
-/******/t.o(o,r)&&!t.o(e,r)&&
-/******/Object.defineProperty(e,r,{enumerable:!0,get:o[r]})
+/******/d:(e,r)=>{
+/******/for(var o in r)
+/******/t.o(r,o)&&!t.o(e,o)&&
+/******/Object.defineProperty(e,o,{enumerable:!0,get:r[o]})
 /******/;
 /******/},
 /******/o:(t,e)=>Object.prototype.hasOwnProperty.call(t,e)
@@ -33,6 +33,6 @@
 t.r(e),
 // EXPORTS
 t.d(e,{main:()=>/* binding */a});// external "axios"
-const o=require("axios");var r=t.n(o);// ./serverless_src/deleteContact.ts
-const a=async({parameters:t})=>{const{id:e}=t;if(!e||"string"!=typeof e||!e.trim())throw Error("A valid contact id must be provided to perform a delete");const o="pat-na1-4dd316d2-5666-4a2c-af82-a1d77cecd1e4";const a=`https://api.hubapi.com/crm/v3/objects/contacts/${e}`;try{const t=await r().delete(a,{headers:{Authorization:`Bearer ${o}`,"Content-Type":"application/json"},validateStatus:()=>!0});if(204!==t.status)throw Error(`Failed to delete contact. Expected status 204, but got ${t.status}`);return{success:!0}}catch(t){throw Error(`Failed to delete contact: ${t}`)}};module.exports=e})
+const r=require("axios");var o=t.n(r);// ./serverless_src/deleteContact.ts
+const a=async({parameters:t})=>{const{id:e}=t;if(!e||"string"!=typeof e||!e.trim())throw Error("A valid contact id must be provided to perform a delete");const r=process.env.PRIVATE_APP_ACCESS_TOKEN;if(!r)throw Error("Missing PRIVATE_APP_ACCESS_TOKEN");const a=`https://api.hubapi.com/crm/v3/objects/contacts/${e}`;try{const t=await o().delete(a,{headers:{Authorization:`Bearer ${r}`,"Content-Type":"application/json"},validateStatus:()=>!0});if(204!==t.status)throw Error(`Failed to delete contact. Expected status 204, but got ${t.status}`);return{success:!0}}catch(t){throw Error(`Failed to delete contact: ${t}`)}};module.exports=e})
 /******/();
