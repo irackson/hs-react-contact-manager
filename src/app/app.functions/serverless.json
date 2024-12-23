@@ -11,10 +11,6 @@
     "fetchContacts": {
       "file": "serverless_dist/fetchContacts.js",
       "secrets": []
-    },
-    "updateContact": {
-      "file": "serverless_dist/updateContact.js",
-      "secrets": []
     }
   }
 }
