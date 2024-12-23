@@ -46,7 +46,7 @@ const ContactManager = ({
     type: 'info' | 'tip' | 'success' | 'warning' | 'danger';
   }) => void;
 }) => {
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [pageInfo, setPageInfo] = useState(initialPageInfo);
@@ -57,13 +57,21 @@ const ContactManager = ({
     includeInactive: true,
     includeEmpty: true,
   });
-
   const [focusedContactId, setFocusedContactId] = useState<string | null>(null);
 
-  const fetchContacts = async (withPagingReset = false) => {
+  const fetchContacts = async (
+    withPagingReset = false,
+    offsetOverride?: number
+  ) => {
     setLoading(true);
     setError(null);
     try {
+      const actualOffset =
+        offsetOverride !== undefined
+          ? offsetOverride
+          : withPagingReset
+          ? 0
+          : pageInfo.offset;
       const {
         contacts: fetchedContacts,
         hasMore: fetchedHasMore,
@@ -72,19 +80,13 @@ const ContactManager = ({
       } = (await hubspot.serverless('fetchContacts', {
         parameters: {
           pageInfo: {
-            offset: withPagingReset ? 0 : pageInfo.offset,
+            offset: actualOffset,
             limit: pageInfo.limit,
           },
           statusFilterOptions,
           orderBy: [
-            {
-              propertyName: 'email',
-              ascending: true,
-            },
-            {
-              propertyName: 'hs_object_id',
-              ascending: true,
-            },
+            { propertyName: 'email', ascending: true },
+            { propertyName: 'hs_object_id', ascending: true },
           ],
         } satisfies FetchContactsParameters,
       })) as FetchContactsResponse;
@@ -122,10 +124,9 @@ const ContactManager = ({
     email: string | undefined;
   }) => {
     try {
-      const deleteResponse = await hubspot.serverless('deleteContact', {
+      const __deleteResponse = await hubspot.serverless('deleteContact', {
         parameters: { id },
       });
-
       addAlert({
         title: 'Contact Deleted',
         type: 'success',
@@ -204,11 +205,11 @@ const ContactManager = ({
         })()}
         placeholder="Filter by Status"
         label="Select Status(es)"
-        onChange={(value) => {
+        onChange={(values) => {
           setStatusFilterOptions({
-            includeActive: value.includes('active'),
-            includeInactive: value.includes('inactive'),
-            includeEmpty: value.includes('empty'),
+            includeActive: values.includes('active'),
+            includeInactive: values.includes('inactive'),
+            includeEmpty: values.includes('empty'),
           });
         }}
         options={[
@@ -234,13 +235,14 @@ const ContactManager = ({
               : 1
           }
           page={pageInfo.currentPage}
-          onPageChange={(newPageNumber) => {
+          onPageChange={async (newPageNumber) => {
+            const newOffset = (newPageNumber - 1) * pageInfo.limit;
             setPageInfo((curr) => ({
               ...curr,
-              offset: (newPageNumber - 1) * curr.limit,
+              offset: newOffset,
               currentPage: newPageNumber,
             }));
-            fetchContacts();
+            await fetchContacts(false, newOffset);
           }}
         >
           <TableHead>
