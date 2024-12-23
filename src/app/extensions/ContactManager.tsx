@@ -15,6 +15,7 @@ import {
   Box,
   Divider,
   ButtonRow,
+  ErrorState,
   hubspot,
 } from '@hubspot/ui-extensions';
 import { CrmPropertyList, CrmActionButton } from '@hubspot/ui-extensions/crm';
@@ -24,8 +25,8 @@ import {
 } from '../app.functions/serverless_src/fetchContacts';
 import { type CreateContactsParameters } from '../app.functions/serverless_src/createContact';
 
-hubspot.extend(({ actions }) => (
-  <ContactManager addAlert={actions['addAlert']} />
+hubspot.extend(({ actions, context }) => (
+  <ContactManager addAlert={actions['addAlert']} context={context} />
 ));
 
 const initialPageInfo: FetchContactsParameters['pageInfo'] & {
@@ -44,12 +45,14 @@ const initialPageInfo: FetchContactsParameters['pageInfo'] & {
 
 const ContactManager = ({
   addAlert,
+  context,
 }: {
   addAlert: (args: {
     title: string;
     message: string;
     type: 'info' | 'tip' | 'success' | 'warning' | 'danger';
   }) => void;
+  context: Parameters<Parameters<typeof hubspot.extend>[0]>[0]['context'];
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,7 +177,23 @@ const ContactManager = ({
   };
 
   if (loading) return <LoadingSpinner label="Loading..." />;
-  if (error) return <Text>{error}</Text>;
+  if (error)
+    return (
+      <ErrorState title="Error">
+        <Text>Please try again in a few moments.</Text>
+        <CrmActionButton
+          actionType="RECORD_APP_LINK"
+          actionContext={{
+            objectTypeId: '0-1',
+            objectId: context['crm']['objectId'],
+            includeEschref: false,
+          }}
+          variant="secondary"
+        >
+          Try Again
+        </CrmActionButton>
+      </ErrorState>
+    );
 
   return (
     <>
