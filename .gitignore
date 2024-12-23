@@ -3,3 +3,4 @@ hubspot.config.yml
 .vite
 src/app/dist
 **/*.js.map
+node_modules
