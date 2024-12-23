@@ -12,6 +12,9 @@ import {
   LoadingSpinner,
   Text,
   Flex,
+  Box,
+  Divider,
+  ButtonRow,
   hubspot,
 } from '@hubspot/ui-extensions';
 import { CrmPropertyList, CrmActionButton } from '@hubspot/ui-extensions/crm';
@@ -159,6 +162,8 @@ const ContactManager = ({
           waitForSearchIndexUpdate: true,
         } satisfies CreateContactsParameters,
       });
+      //! wait extra time for the search index to update after create
+      await new Promise((r) => setTimeout(r, 1_000));
       await fetchContacts(true);
       setFocusedContactId(id);
     } catch (err) {
@@ -173,19 +178,45 @@ const ContactManager = ({
 
   return (
     <>
-      {focusedContactId && (
-        <CrmPropertyList
-          properties={[
-            'email',
-            'firstname',
-            'lastname',
-            'hs_content_membership_status',
-          ]}
-          direction="row"
-          objectTypeId="0-1"
-          objectId={Number(focusedContactId)}
-        />
-      )}
+      {
+        <>
+          <Flex direction={'column'} align={'start'} gap={'xs'}>
+            <Divider />
+            <Button
+              onClick={async () => {
+                await handleCreateContact();
+              }}
+              variant="primary"
+            >
+              Create New Contact
+            </Button>
+            {focusedContactId && (
+              <>
+                <Divider />
+                <Box>
+                  <Text format={{ fontWeight: 'bold' }}>
+                    {`Editing Contact ${focusedContactId}`}
+                  </Text>
+                </Box>
+                <Box alignSelf={'stretch'}>
+                  <CrmPropertyList
+                    properties={[
+                      'email',
+                      'firstname',
+                      'lastname',
+                      'hs_content_membership_status',
+                    ]}
+                    direction="row"
+                    objectTypeId="0-1"
+                    objectId={Number(focusedContactId)}
+                  />
+                </Box>
+                <Divider />
+              </>
+            )}
+          </Flex>
+        </>
+      }
 
       <MultiSelect
         value={(() => {
@@ -222,6 +253,11 @@ const ContactManager = ({
         </EmptyState>
       ) : (
         <Table
+          showFirstLastButtons={true}
+          bordered={true}
+          showButtonLabels={true}
+          maxVisiblePageButtons={5}
+          flush={false}
           paginated
           pageCount={
             typeof pageInfo.total === 'number'
@@ -241,8 +277,8 @@ const ContactManager = ({
         >
           <TableHead>
             <TableRow>
-              <TableHeader>Name</TableHeader>
               <TableHeader>Email</TableHeader>
+              <TableHeader>Name</TableHeader>
               <TableHeader>Status</TableHeader>
               <TableHeader>Actions</TableHeader>
             </TableRow>
@@ -250,51 +286,60 @@ const ContactManager = ({
           <TableBody>
             {pageInfo.contacts.map((contact) => {
               const {
+                email,
                 firstname,
                 lastname,
-                email,
                 hs_content_membership_status,
                 _metadata: { id },
               } = contact;
 
               return (
                 <TableRow key={id}>
+                  <TableCell>{email?.length ? email : '--'}</TableCell>
                   <TableCell>
                     {firstname?.length || lastname?.length
                       ? `${firstname ?? ''} ${lastname ?? ''}`
                       : '--'}
                   </TableCell>
-                  <TableCell>{email?.length ? email : '--'}</TableCell>
                   <TableCell>
                     {hs_content_membership_status?.label || '--'}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      onClick={() => {
-                        setFocusedContactId(id);
+                    <ButtonRow
+                      dropDownButtonOptions={{
+                        text: 'Extra',
+                        size: 'sm',
+                        variant: 'transparent',
                       }}
                     >
-                      Edit
-                    </Button>
-
-                    <Button
-                      onClick={async () => {
-                        await handleDeleteContact({ id, email });
-                      }}
-                    >
-                      Delete
-                    </Button>
-                    <CrmActionButton
-                      actionType="RECORD_APP_LINK"
-                      actionContext={{
-                        objectTypeId: '0-1',
-                        objectId: Number(id),
-                        includeEschref: true,
-                      }}
-                      variant="secondary"
-                    >
-                      View
-                    </CrmActionButton>
+                      <Button
+                        variant="primary"
+                        onClick={() => {
+                          setFocusedContactId(id);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={async () => {
+                          await handleDeleteContact({ id, email });
+                        }}
+                      >
+                        Delete
+                      </Button>
+                      <CrmActionButton
+                        actionType="RECORD_APP_LINK"
+                        actionContext={{
+                          objectTypeId: '0-1',
+                          objectId: Number(id),
+                          includeEschref: true,
+                        }}
+                        variant="secondary"
+                      >
+                        View
+                      </CrmActionButton>
+                    </ButtonRow>
                   </TableCell>
                 </TableRow>
               );
@@ -302,17 +347,6 @@ const ContactManager = ({
           </TableBody>
         </Table>
       )}
-
-      <Flex align={'center'} justify={'center'}>
-        <Button
-          onClick={async () => {
-            await handleCreateContact();
-          }}
-          variant="primary"
-        >
-          Create New Contact
-        </Button>
-      </Flex>
     </>
   );
 };
